@@ -29,12 +29,30 @@ export function Question({ row }: QuestionProps) {
     if (answer.Evaluate) {
       const evalResult = EvaluateFormulaProcessor.evaluateFormula(answer.Evaluate);
       
+      // Log evaluation details
+      console.log(`[Question: ${step.Prompt?.substring(0, 50)}...] Answer: "${answer.Prompt}"`);
+      console.log(`  Evaluate: ${answer.Evaluate}`);
+      console.log(`  Result: ${evalResult}`);
+      console.log(`  HideIfEvaluateTrue: ${answer.HideIfEvaluateTrue} (configured value)`);
+      
       if (evalResult === 'true') {
-        if (answer.HideIfEvaluateTrue) {
+        // Check HideIfEvaluateTrue (case-insensitive)
+        const hideIfTrue = answer.HideIfEvaluateTrue && 
+          (typeof answer.HideIfEvaluateTrue === 'boolean' ? 
+            answer.HideIfEvaluateTrue : 
+            answer.HideIfEvaluateTrue.toString().toLowerCase() === 'true');
+        
+        if (hideIfTrue) {
+          console.log(`  → Will HIDE answer and AUTO-ANSWER (HideIfEvaluateTrue=true)`);
           shouldShow = false;
+          shouldAutoAnswer = true; // Auto-answer when hidden due to evaluation
         } else {
+          // If evaluation is true but not hiding, still auto-answer
+          console.log(`  → Will AUTO-ANSWER but keep visible (HideIfEvaluateTrue=false/undefined)`);
           shouldAutoAnswer = true;
         }
+      } else {
+        console.log(`  → No action (evaluation was ${evalResult})`);
       }
     }
     
@@ -46,19 +64,22 @@ export function Question({ row }: QuestionProps) {
     };
   });
   
+  // Check if this question should be hidden because it will auto-answer
+  const willAutoAnswer = processedAnswers.some((a: any) => a.shouldAutoAnswer);
+  
   // Auto-answer if conditions are met
   useEffect(() => {
     if (!answered && !autoAnswered) {
       const autoAnswer = processedAnswers.find((a: any) => a.shouldAutoAnswer);
       if (autoAnswer) {
-        console.log('Auto-answering with:', autoAnswer);
+        console.log('Auto-answering question with:', autoAnswer);
         handleAnswer(autoAnswer.GUID, autoAnswer);
         setAutoAnswered(true);
       }
     }
   }, [answered, autoAnswered]);
   
-  const handleAnswer = (answerId: string, answer: any) => {
+  const handleAnswer = async (answerId: string, answer: any) => {
     // Allow changing answer if it's the same question
     // Only prevent if we've already processed substeps
     if (answered && selectedAnswerGUID !== answerId) {
@@ -77,7 +98,21 @@ export function Question({ row }: QuestionProps) {
     
     // Execute any commands if specified
     if (answer.Execute) {
-      ExecuteCommandProcessor.processExecute(answer.Execute);
+      // Check if this is an end command that should stop further processing
+      const executeCmd = answer.Execute.toLowerCase();
+      const isEndCommand = executeCmd.includes('endinteraction') || 
+                           executeCmd.includes('dispositioncall');
+      
+      if (isEndCommand) {
+        // For end commands, execute them but don't process the answer
+        // This prevents the workflow from continuing
+        console.log('Executing end command:', answer.Execute);
+        ExecuteCommandProcessor.processExecute(answer.Execute);
+        // Don't call answerQuestion - this prevents workflow continuation
+        return;
+      } else {
+        ExecuteCommandProcessor.processExecute(answer.Execute);
+      }
     }
     
     // Process answer in workflow store
@@ -86,6 +121,16 @@ export function Question({ row }: QuestionProps) {
   
   // Filter visible answers
   const visibleAnswers = processedAnswers.filter((a: any) => a.shouldShow);
+  
+  // If any answer has HideIfEvaluateTrue=true and evaluates to true, 
+  // hide the entire question (it auto-answers invisibly)
+  const hasHiddenAutoAnswer = processedAnswers.some((a: any) => 
+    a.shouldAutoAnswer && !a.shouldShow
+  );
+  
+  if (hasHiddenAutoAnswer) {
+    return null; // Don't show the question at all
+  }
   
   // Determine button layout based on total text length
   const totalTextLength = visibleAnswers.reduce((sum: number, a: any) => sum + a.text.length, 0);
@@ -104,11 +149,6 @@ export function Question({ row }: QuestionProps) {
     visibleAnswers.every((a: any) => a.text.length < 15)
       ? 'horizontal' 
       : 'vertical';
-  
-  // If auto-answered and no visible answers, don't show anything
-  if (autoAnswered && visibleAnswers.length === 0) {
-    return null;
-  }
   
   return (
     <div className="space-y-3">

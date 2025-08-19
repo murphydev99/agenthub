@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -6,21 +6,27 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
-import { Play, FileText, Clock, CheckCircle, Search, Loader2, Users, ArrowRight } from 'lucide-react';
-import { workflowService } from '../services/api/workflows';
+import { Play, FileText, Clock, CheckCircle, Search, Loader2, Users, ArrowRight, Sparkles, Shield, Zap, Activity, AlertCircle } from 'lucide-react';
+import { workflowService, type WorkflowAlias } from '../services/api/workflows';
 import { useVariableStore } from '../store/variableStore';
 import { useWorkflowStore } from '../store/workflowStore';
 import { useInteractionStore } from '../store/interactionStore';
+import { showConfirmDialog } from '../components/ui/confirm-dialog';
 
 export function Dashboard() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [workflowAlias, setWorkflowAlias] = useState('');
+  const [filteredAliases, setFilteredAliases] = useState<WorkflowAlias[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
   const { clearAllVariables } = useVariableStore();
   const { endSession } = useWorkflowStore();
   const { 
     interactionMode, 
-    toggleInteractionMode, 
+    setInteractionMode, 
     currentInteractionGUID,
     interactionWorkflows,
     startInteraction,
@@ -34,6 +40,42 @@ export function Dashboard() {
     queryKey: ['workflows'],
     queryFn: () => workflowService.listWorkflows(20),
   });
+
+  // Fetch aliases from the database
+  const { data: aliases = [] } = useQuery({
+    queryKey: ['aliases'],
+    queryFn: () => workflowService.getAliases(),
+  });
+
+  // Search for aliases
+  useEffect(() => {
+    if (workflowAlias && workflowAlias.length > 0 && aliases && aliases.length > 0) {
+      const query = workflowAlias.toLowerCase();
+      // Filter aliases from database by the search query
+      const filtered = aliases.filter((item: WorkflowAlias) => 
+        item.AliasText && item.AliasText.toLowerCase().includes(query)
+      );
+      setFilteredAliases(filtered);
+      setShowSuggestions(filtered.length > 0);
+      setSelectedIndex(0);
+    } else {
+      setFilteredAliases([]);
+      setShowSuggestions(false);
+    }
+  }, [workflowAlias, aliases]);
+
+  // Handle clicking outside to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node) &&
+          searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleStartWorkflow = (workflowId: string, workflowName?: string) => {
     if (interactionMode) {
@@ -57,23 +99,30 @@ export function Dashboard() {
     }
   };
 
-  const handleStartByAlias = async () => {
-    if (workflowAlias) {
+  const handleStartByAlias = async (aliasItem?: WorkflowAlias) => {
+    const selected = aliasItem || filteredAliases[selectedIndex];
+    
+    if (selected) {
+      // Use the alias to navigate (the WorkflowExecution will resolve it)
+      if (interactionMode) {
+        // In interaction mode, don't clear variables
+        if (!currentInteractionGUID) {
+          startInteraction();
+        }
+        const encoded = btoa(selected.AliasText);
+        navigate(`/w/${encoded}?interaction=true`);
+      } else {
+        // Normal mode: clear everything
+        endSession();
+        clearAllVariables();
+        const encoded = btoa(selected.AliasText);
+        navigate(`/w/${encoded}`);
+      }
+      setWorkflowAlias('');
+      setShowSuggestions(false);
+    } else if (workflowAlias) {
+      // Try with the typed alias as a fallback
       try {
-        // Try to validate the alias exists first (only if API is running)
-        let searchResults: any[] = [];
-        try {
-          searchResults = await workflowService.searchWorkflows(workflowAlias, 1);
-        } catch (searchError) {
-          // API might not be running, continue anyway
-          console.log('Could not validate alias, continuing anyway');
-        }
-        
-        if (searchResults.length === 0) {
-          // No exact match found, but still try to navigate - the WorkflowExecution page will handle the error
-          console.warn(`No workflow found with alias: ${workflowAlias}`);
-        }
-        
         if (interactionMode) {
           // In interaction mode, don't clear variables
           if (!currentInteractionGUID) {
@@ -97,8 +146,44 @@ export function Dashboard() {
     }
   };
 
-  const handleEndInteraction = () => {
-    if (confirm('Are you sure you want to end this interaction? All workflow data will be cleared.')) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions) return;
+    
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < filteredAliases.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : 0);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (filteredAliases.length > 0) {
+          handleStartByAlias();
+        }
+        break;
+      case 'Escape':
+        setShowSuggestions(false);
+        break;
+    }
+  };
+
+  const handleEndInteraction = async () => {
+    const confirmed = await showConfirmDialog(
+      'Are you sure you want to end this interaction? All workflow data will be cleared.',
+      {
+        title: 'End Interaction',
+        confirmText: 'End Interaction',
+        cancelText: 'Keep Working',
+        type: 'warning'
+      }
+    );
+    
+    if (confirmed) {
       endInteraction();
       endSession();
       clearAllVariables();
@@ -106,303 +191,347 @@ export function Dashboard() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-            <p className="text-muted-foreground">Welcome to AgentHub Workflow System</p>
-          </div>
-          
-          {/* Interaction Mode Toggle */}
-          <Card className="p-4 border-2 hover:shadow-lg transition-shadow">
-            <div className="flex items-center space-x-3">
-              <Users className="h-5 w-5 text-blue-600" />
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="interaction-mode"
-                  checked={interactionMode}
-                  onCheckedChange={toggleInteractionMode}
-                />
-                <Label htmlFor="interaction-mode" className="font-medium">
-                  Interaction Mode
-                </Label>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <div className="p-6 max-w-6xl mx-auto">
+        {/* Animated Header */}
+        <div className="mb-8">
+          <div className="flex justify-between items-start">
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-20"></div>
+              <div className="relative">
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  AgentHub Dashboard
+                </h2>
+                <p className="text-gray-600 mt-2 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-purple-500" />
+                  Welcome to the next-generation workflow system
+                </p>
               </div>
             </div>
-            {interactionMode && (
-              <div className="mt-3 pt-3 border-t border-blue-200">
-                {currentInteractionGUID ? (
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold text-blue-700">
-                      Active Interaction
-                    </p>
-                    <p className="text-xs font-mono bg-blue-50 px-2 py-1 rounded">
-                      {currentInteractionGUID.slice(0, 8)}...
-                    </p>
-                    <p className="text-sm text-blue-600">
-                      {interactionWorkflows.length} workflow{interactionWorkflows.length !== 1 ? 's' : ''} executed
-                    </p>
-                    <Button 
-                      size="sm" 
-                      variant="destructive" 
-                      onClick={handleEndInteraction}
-                      className="w-full"
-                    >
-                      End Interaction
-                    </Button>
+          
+            {/* Interaction Mode Toggle */}
+            <Card className={`relative overflow-hidden transition-all duration-300 ${
+              interactionMode 
+                ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-2xl scale-105' 
+                : 'bg-white hover:shadow-xl'
+            }`}>
+              <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
+              <div className="relative p-5">
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-lg ${interactionMode ? 'bg-white/20' : 'bg-gray-100'}`}>
+                    <Shield className={`h-6 w-6 ${interactionMode ? 'text-white' : 'text-gray-600'}`} />
                   </div>
-                ) : (
-                  <p className="text-sm text-blue-600 italic">
-                    Ready to start new interaction
-                  </p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className={`text-xs uppercase tracking-wider ${interactionMode ? 'text-white/80' : 'text-gray-500'}`}>
+                          Interaction Mode
+                        </p>
+                        <p className={`text-2xl font-bold ${interactionMode ? 'text-white' : 'text-gray-900'}`}>
+                          {interactionMode ? 'ACTIVE' : 'INACTIVE'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={interactionMode}
+                        onClick={() => setInteractionMode(!interactionMode)}
+                        className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ${
+                          interactionMode ? 'bg-white/30' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-6 w-6 transform rounded-full transition-all duration-300 ${
+                            interactionMode 
+                              ? 'translate-x-7 bg-white shadow-lg' 
+                              : 'translate-x-1 bg-white shadow'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                {interactionMode && (
+                  <div className="mt-4 pt-4 border-t border-white/20">
+                    {currentInteractionGUID ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Activity className="h-4 w-4 animate-pulse" />
+                            <p className="text-sm font-semibold">
+                              Session Active
+                            </p>
+                          </div>
+                          <p className="text-xs font-mono bg-white/20 px-2 py-1 rounded">
+                            {currentInteractionGUID.slice(0, 8)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs">
+                          <span className="flex items-center gap-1">
+                            <FileText className="h-3 w-3" />
+                            {interactionWorkflows.length} workflows
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Active
+                          </span>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="secondary"
+                          onClick={handleEndInteraction}
+                          className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30"
+                        >
+                          End Interaction
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Zap className="h-4 w-4" />
+                        <p>Ready to start new interaction</p>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </Card>
+            </Card>
+          </div>
         </div>
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Workflows</CardTitle>
-            <FileText className="h-4 w-4 text-purple-500" />
-          </CardHeader>
+        <div className="space-y-6">
+          {/* Show Start Interaction button when in interaction mode */}
+          {interactionMode ? (
+            <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600">
+              <div className="absolute inset-0 bg-black/10" />
+              <div className="relative">
+                <CardHeader className="text-white">
+                  <CardTitle className="text-2xl flex items-center gap-2">
+                    <Shield className="h-7 w-7" />
+                    Start New Interaction
+                  </CardTitle>
+                  <CardDescription className="text-white/80">
+                    Begin a secure customer interaction with authentication
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={async () => {
+                      // Start a new interaction
+                      if (!currentInteractionGUID) {
+                        startInteraction();
+                      }
+                      
+                      // Load the authenticate workflow
+                      try {
+                        // TODO: Make this configurable
+                        const authenticateAlias = 'authenticate';
+                        const encoded = btoa(authenticateAlias);
+                        navigate(`/w/${encoded}?interaction=true`);
+                      } catch (error) {
+                        console.error('Error starting interaction:', error);
+                      }
+                    }}
+                    className="w-full bg-white text-purple-600 hover:bg-white/90 font-bold shadow-lg"
+                    size="lg"
+                    disabled={currentInteractionGUID !== null}
+                  >
+                    {currentInteractionGUID ? (
+                      <>
+                        <Activity className="mr-2 h-5 w-5 animate-pulse" />
+                        Interaction In Progress
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="mr-2 h-5 w-5" />
+                        Start Secure Interaction
+                      </>
+                    )}
+                  </Button>
+              
+                  
+                  {currentInteractionGUID && (
+                    <div className="mt-4 p-4 bg-white/20 backdrop-blur rounded-lg text-white">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium flex items-center gap-2">
+                          <Activity className="h-4 w-4 animate-pulse" />
+                          Active Session
+                        </p>
+                        <p className="text-xs font-mono bg-white/20 px-2 py-1 rounded">
+                          {currentInteractionGUID.slice(0, 8)}
+                        </p>
+                      </div>
+                      <p className="text-xs mt-2 text-white/80">{interactionWorkflows.length} workflow(s) executed</p>
+                    </div>
+                  )}
+                </CardContent>
+              </div>
+            </Card>
+          ) : (
+            <>
+            {/* Quick Start by Alias - Hidden in interaction mode */}
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-purple-600" />
+                  Quick Start
+                </CardTitle>
+                <CardDescription>Search and launch workflows instantly by alias</CardDescription>
+              </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-700">{workflows?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">Ready to execute</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
-            <Play className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-700">{currentInteractionGUID ? interactionWorkflows.length : 0}</div>
-            <p className="text-xs text-muted-foreground">Currently running</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Today</CardTitle>
-            <CheckCircle className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-700">0</div>
-            <p className="text-xs text-muted-foreground">Successfully completed</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Duration</CardTitle>
-            <Clock className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-700">0m</div>
-            <p className="text-xs text-muted-foreground">Per workflow</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="mt-6 space-y-4">
-        {/* Quick Start by Alias */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Start</CardTitle>
-            <CardDescription>Enter a workflow alias or select from the list below</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex space-x-2">
-              <Input
-                placeholder="Enter workflow alias (e.g., 'customer-intake')"
-                value={workflowAlias}
-                onChange={(e) => setWorkflowAlias(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleStartByAlias()}
-              />
-              <Button onClick={handleStartByAlias} disabled={!workflowAlias}>
-                <Play className="mr-2 h-4 w-4" />
-                Start
-              </Button>
+            <div className="relative">
+              <div className="flex space-x-2">
+                <div className="flex-1 relative">
+                  <Input
+                    ref={searchInputRef}
+                    placeholder="Enter workflow alias..."
+                    value={workflowAlias}
+                    onChange={(e) => setWorkflowAlias(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => {
+                      if (filteredAliases.length > 0) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    className="pr-10"
+                  />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
+                <Button 
+                  onClick={() => handleStartByAlias()} 
+                  disabled={!workflowAlias && filteredAliases.length === 0}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md"
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  Launch
+                </Button>
+              </div>
+              
+              {/* Search Suggestions Dropdown */}
+              {showSuggestions && filteredAliases.length > 0 && (
+                <div 
+                  ref={suggestionsRef}
+                  className="absolute z-10 w-full mt-2 bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto"
+                >
+                  {filteredAliases.map((item, index) => (
+                    <div
+                      key={item.AliasText}
+                      className={`px-4 py-3 cursor-pointer transition-colors ${
+                        index === selectedIndex 
+                          ? 'bg-blue-50 border-l-2 border-blue-500' 
+                          : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => handleStartByAlias(item)}
+                      onMouseEnter={() => setSelectedIndex(index)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm font-mono text-blue-600">
+                            {item.AliasText}
+                          </p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-gray-400 ml-2" />
+                      </div>
+                    </div>
+                  ))}
+                  {filteredAliases.length > 0 && (
+                    <div className="px-4 py-2 text-xs text-gray-500 border-t">
+                      {filteredAliases.length} alias{filteredAliases.length !== 1 ? 'es' : ''} found
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* No results message */}
+              {showSuggestions && workflowAlias && filteredAliases.length === 0 && (
+                <div className="absolute z-10 w-full mt-2 bg-white border rounded-lg shadow-lg p-4">
+                  <p className="text-sm text-gray-500">No workflows found with alias "{workflowAlias}"</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Available Workflows */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Workflows</CardTitle>
-            <CardDescription>Select a workflow to start</CardDescription>
-          </CardHeader>
+            {/* Available Workflows - Hidden in interaction mode */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  Available Workflows
+                </CardTitle>
+                <CardDescription>Select from your workflow library</CardDescription>
+              </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-10 w-10 animate-spin text-purple-600 mb-3" />
+                <p className="text-sm text-gray-500">Loading workflows...</p>
               </div>
             ) : error ? (
-              <div className="text-center py-8 text-red-600">
-                Failed to load workflows. Please check your API connection.
+              <div className="text-center py-8">
+                <div className="inline-flex items-center gap-2 text-red-600 bg-red-50 px-4 py-2 rounded-lg">
+                  <AlertCircle className="h-5 w-5" />
+                  <span>Failed to load workflows. Please check your API connection.</span>
+                </div>
               </div>
             ) : workflows && workflows.length > 0 ? (
               <div className="space-y-2">
                 {workflows.map((workflow: any, index: number) => {
-                  const colors = ['border-purple-200', 'border-blue-200', 'border-green-200', 'border-orange-200'];
-                  const iconColors = ['text-purple-500', 'text-blue-500', 'text-green-500', 'text-orange-500'];
-                  const bgHovers = ['hover:bg-purple-50', 'hover:bg-blue-50', 'hover:bg-green-50', 'hover:bg-orange-50'];
+                  const gradients = [
+                    'from-purple-500 to-pink-500',
+                    'from-blue-500 to-cyan-500',
+                    'from-green-500 to-emerald-500',
+                    'from-orange-500 to-red-500'
+                  ];
                   const colorIndex = index % 4;
                   
                   return (
                     <div
                       key={workflow.WorkflowUID}
-                      className={`flex items-center justify-between p-3 border-2 ${colors[colorIndex]} rounded-lg ${bgHovers[colorIndex]} cursor-pointer transition-all hover:shadow-sm`}
+                      className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-transparent"
                       onClick={() => handleStartWorkflow(workflow.WorkflowUID, workflow.WorkflowName)}
                     >
-                      <div className="flex items-center space-x-3">
-                        <FileText className={`h-5 w-5 ${iconColors[colorIndex]}`} />
-                        <div>
-                          <p className="font-medium">{workflow.WorkflowName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Last updated: {new Date(workflow.LastUpdated).toLocaleDateString()}
-                          </p>
+                      <div className={`absolute inset-0 bg-gradient-to-r ${gradients[colorIndex]} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                      <div className="relative flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className={`p-2 rounded-lg bg-gradient-to-r ${gradients[colorIndex]} text-white shadow-md`}>
+                            <FileText className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-800 group-hover:text-gray-900">
+                              {workflow.WorkflowName}
+                            </p>
+                            <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                              <Clock className="h-3 w-3" />
+                              {new Date(workflow.LastUpdated).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        >
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button size="sm" variant="ghost" className={iconColors[colorIndex]}>
-                        <Play className="h-4 w-4" />
-                      </Button>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No workflows available. Create one using the API or import from PDF.
+              <div className="text-center py-12">
+                <div className="inline-block">
+                  <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">No workflows available</p>
+                  <p className="text-sm text-gray-400 mt-1">Create one using the API or import from PDF</p>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
-
-        {/* Test Workflow */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Test Workflow</CardTitle>
-            <CardDescription>Try a sample workflow to test the system</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              onClick={() => {
-                // End any existing session and clear all variables before starting a new workflow
-                endSession();
-                clearAllVariables();
-                // Create a test workflow and navigate to it
-                const testWorkflow = {
-                  WorkflowName: "Test Workflow",
-                  Steps: [
-                    {
-                      GUID: "step1",
-                      StepType: "userinstruction",
-                      Prompt: "<h3>Welcome to the Test Workflow</h3><p>This is a sample workflow to demonstrate the system capabilities.</p>"
-                    },
-                    {
-                      GUID: "step2",
-                      StepType: "question",
-                      Prompt: "Are you ready to begin?",
-                      Answers: [
-                        {
-                          GUID: "ans1",
-                          Prompt: "Yes",
-                          NotesTemplate: "User selected: Yes - starting intake process",
-                          SubSteps: [
-                            {
-                              GUID: "step3",
-                              StepType: "collect",
-                              Prompt: "Please enter your name:",
-                              VariableName: "UserName",
-                              Format: "text",
-                              NotesTemplate: "User Name: ~#value#~"
-                            },
-                            {
-                              GUID: "step4",
-                              StepType: "userinstruction",
-                              Prompt: "Thank you, ~#UserName#~! Now we'll load another workflow."
-                            },
-                            {
-                              GUID: "step5",
-                              StepType: "loadworkflow",
-                              WorkflowName: "Sub-Workflow Test"
-                            },
-                            {
-                              GUID: "step6",
-                              StepType: "userinstruction",
-                              Prompt: "Welcome back from the sub-workflow! Test complete."
-                            },
-                            {
-                              GUID: "step7",
-                              StepType: "notesblock",
-                              NotesTemplate: "=== WORKFLOW SUMMARY ===\nUser Name: ~#UserName#~\nFavorite Color: ~#FavoriteColor#~\nWorkflow completed successfully."
-                            }
-                          ]
-                        },
-                        {
-                          GUID: "ans2",
-                          Prompt: "No",
-                          NotesTemplate: "User selected: No - workflow ended",
-                          SubSteps: [
-                            {
-                              GUID: "step7",
-                              StepType: "userinstruction",
-                              Prompt: "No problem! Come back when you're ready."
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                };
-                
-                // Also create a simple sub-workflow for testing
-                const subTestWorkflow = {
-                  WorkflowName: "Sub-Workflow Test",
-                  WorkflowUID: "subtest-123",
-                  Steps: [
-                    {
-                      GUID: "sub1",
-                      StepType: "userinstruction",
-                      Prompt: "<h3>Sub-Workflow</h3><p>You are now in a sub-workflow!</p>"
-                    },
-                    {
-                      GUID: "sub2",
-                      StepType: "collect",
-                      Prompt: "Enter your favorite color:",
-                      VariableName: "FavoriteColor",
-                      Format: "text",
-                      NotesTemplate: "Favorite Color: ~#value#~"
-                    },
-                    {
-                      GUID: "sub3",
-                      StepType: "userinstruction",
-                      Prompt: "Great! Your favorite color is ~#FavoriteColor#~. Sub-workflow complete."
-                    }
-                  ]
-                };
-                
-                // Store both workflows - cache by workflow name
-                localStorage.setItem('workflow_cache_Sub-Workflow Test', JSON.stringify(subTestWorkflow));
-                localStorage.setItem('workflow_cache_Sub-Workflow Test_timestamp', Date.now().toString());
-                
-                // Store test workflow in localStorage
-                localStorage.setItem('test_workflow', JSON.stringify(testWorkflow));
-                navigate('/w/test');
-              }}
-              className="w-full"
-            >
-              <Play className="mr-2 h-4 w-4" />
-              Run Test Workflow
-            </Button>
-          </CardContent>
-        </Card>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

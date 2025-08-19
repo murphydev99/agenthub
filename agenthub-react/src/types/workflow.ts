@@ -60,9 +60,11 @@ export interface Answer {
   
   // Functions to execute
   FunctionName?: string;
+  Execute?: string;
   
-  // Notes generation
+  // Notes generation (both property names are supported)
   NotesTemplate?: string;
+  NoteGeneration?: string;
 }
 
 export type CollectFormat = 

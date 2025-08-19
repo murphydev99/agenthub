@@ -1,6 +1,7 @@
 import { useWorkflowStore } from '../store/workflowStore';
 import { useInteractionStore } from '../store/interactionStore';
 import { useVariableStore } from '../store/variableStore';
+import { showConfirmDialog } from '../components/ui/confirm-dialog';
 
 /**
  * Processes Execute commands from workflow steps
@@ -37,6 +38,11 @@ export class ExecuteCommandProcessor {
     if (lowerCommand === 'system.endworkflow') {
       this.endWorkflow();
     } else if (lowerCommand === 'system.endinteraction') {
+      this.endInteraction();
+    } else if (lowerCommand.startsWith('system.dispositioncall')) {
+      // TODO: Implement proper disposition call handling
+      // For now, treat system.dispositioncall as system.endinteraction
+      console.log('Processing system.dispositioncall as system.endinteraction (temporary)');
       this.endInteraction();
     } else {
       console.log('Unknown or unimplemented command:', command);
@@ -75,12 +81,18 @@ export class ExecuteCommandProcessor {
   /**
    * End the entire interaction
    */
-  static endInteraction() {
+  static async endInteraction() {
     console.log('Executing system.endinteraction');
     
     // Show confirmation dialog
-    const confirmed = window.confirm(
-      'Are you sure you want to end this interaction? All workflow data will be cleared.'
+    const confirmed = await showConfirmDialog(
+      'Are you sure you want to end this interaction? All workflow data will be cleared.',
+      {
+        title: 'End Interaction',
+        confirmText: 'End Interaction',
+        cancelText: 'Continue Workflow',
+        type: 'warning'
+      }
     );
     
     if (confirmed) {
@@ -99,6 +111,9 @@ export class ExecuteCommandProcessor {
       
       // Navigate to dashboard
       window.location.href = '/';
+    } else {
+      // User cancelled - mark the button as answered so workflow doesn't restart
+      console.log('User cancelled end interaction - marking step as complete');
     }
   }
 }

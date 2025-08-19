@@ -20,6 +20,11 @@ export interface WorkflowListItem {
   BeingEditedBy?: string;
 }
 
+export interface WorkflowAlias {
+  AliasText: string;
+  WorkflowName: string;
+}
+
 export interface WorkflowResponse {
   WorkflowName: string;
   WorkflowUID: string;
@@ -34,6 +39,17 @@ export const workflowService = {
       params: { top },
     });
     return data;
+  },
+
+  // Get all aliases from the database
+  async getAliases(): Promise<WorkflowAlias[]> {
+    try {
+      const { data } = await apiClient.get<WorkflowAlias[]>('/aliases');
+      return data;
+    } catch (error) {
+      console.error('Error fetching aliases:', error);
+      return [];
+    }
   },
 
   // Search workflows by name or alias (metadata only)
@@ -91,7 +107,7 @@ export const workflowService = {
   // Get workflow by name (for loadworkflow step)
   async getWorkflowByName(name: string): Promise<Workflow> {
     // Check cache first
-    const cached = this.getCachedWorkflow(name);
+    const cached = this.getCachedWorkflowByName(name);
     if (cached) {
       console.log('Loading workflow from cache:', name);
       return cached;
@@ -104,7 +120,13 @@ export const workflowService = {
     }
     
     // Get the full workflow by UID
-    return this.getWorkflowByUID(workflows[0].WorkflowUID);
+    const workflow = await this.getWorkflowByUID(workflows[0].WorkflowUID);
+    
+    // Cache by both UID and name for faster lookup
+    this.cacheWorkflow(workflow);
+    this.cacheWorkflowByName(workflow);
+    
+    return workflow;
   },
 
   // Get workflow by encoded identifier (for URL access)
@@ -145,9 +167,41 @@ export const workflowService = {
     localStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
   },
 
+  // Cache workflow by name specifically
+  cacheWorkflowByName(workflow: Workflow): void {
+    if (workflow.WorkflowName) {
+      const cacheKey = `workflow_cache_name_${workflow.WorkflowName}`;
+      localStorage.setItem(cacheKey, JSON.stringify(workflow));
+      localStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
+    }
+  },
+
   // Get cached workflow (client-side only)
   getCachedWorkflow(identifier: string): Workflow | null {
     const cacheKey = `workflow_cache_${identifier}`;
+    const cached = localStorage.getItem(cacheKey);
+    const timestamp = localStorage.getItem(`${cacheKey}_timestamp`);
+    
+    if (!cached || !timestamp) return null;
+    
+    // Check if cache is still valid (1 hour)
+    const age = Date.now() - parseInt(timestamp);
+    if (age > 3600000) {
+      localStorage.removeItem(cacheKey);
+      localStorage.removeItem(`${cacheKey}_timestamp`);
+      return null;
+    }
+    
+    try {
+      return JSON.parse(cached);
+    } catch {
+      return null;
+    }
+  },
+
+  // Get cached workflow by name specifically
+  getCachedWorkflowByName(name: string): Workflow | null {
+    const cacheKey = `workflow_cache_name_${name}`;
     const cached = localStorage.getItem(cacheKey);
     const timestamp = localStorage.getItem(`${cacheKey}_timestamp`);
     

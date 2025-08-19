@@ -44,6 +44,8 @@ interface ParentWorkflowState {
   pendingSteps: Step[];
   currentStepIndex: number;
   rows: WorkflowRow[];
+  clearedWindow?: boolean; // Track if window was cleared
+  fromLoadWorkflow?: boolean; // Track if loaded from loadworkflow step
 }
 
 interface WorkflowState {
@@ -67,8 +69,9 @@ interface WorkflowState {
   
   // Actions
   loadWorkflow: (workflow: Workflow) => void;
-  loadSubWorkflow: (workflow: Workflow, parentButtonGUID: string, clearWindow?: boolean) => void;
+  loadSubWorkflow: (workflow: Workflow, parentButtonGUID: string | undefined, clearWindow?: boolean) => void;
   returnFromSubWorkflow: () => void;
+  preloadReferencedWorkflows: (workflow: Workflow) => void;
   
   // Step processing
   processSteps: (steps: Step[], workflowName: string, parentButtonGUID?: string) => void;
@@ -100,7 +103,22 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   currentStepIndex: 0,
 
   loadWorkflow: (workflow) => {
+    const currentState = get();
+    
+    // Prevent reloading the same workflow if it's already loaded
+    if (currentState.currentWorkflow?.WorkflowName === workflow.WorkflowName && 
+        currentState.rows.length > 0) {
+      console.log('[loadWorkflow] Workflow already loaded, skipping reload:', workflow.WorkflowName);
+      return;
+    }
+    
     const workflowGUID = uuidv4();
+    
+    console.log('[loadWorkflow] Loading new workflow:', workflow.WorkflowName);
+    
+    // Check if we're in an interaction to preserve notes
+    const interactionStore = useInteractionStore.getState();
+    const shouldPreserveNotes = interactionStore.isInInteraction();
     
     set({
       currentWorkflow: workflow,
@@ -110,7 +128,12 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       workflowGUID,
       pendingSteps: [],
       currentStepIndex: 0,
+      // Only clear notes if NOT in an interaction
+      ...(shouldPreserveNotes ? {} : { notes: '' }),
     });
+    
+    // Preload any workflows referenced in loadworkflow steps
+    get().preloadReferencedWorkflows(workflow);
     
     // Process root steps after state is set
     setTimeout(() => {
@@ -125,11 +148,15 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     const currentState = get();
     
     // Save the current workflow state including remaining steps and rows
+    // If loading from a loadworkflow step (no parentButtonGUID), we need to move past it
+    // If loading from answer substeps (has parentButtonGUID), don't increment
     const parentState = {
       workflow: currentState.currentWorkflow!,
       pendingSteps: currentState.pendingSteps,
-      currentStepIndex: currentState.currentStepIndex + 1, // Move past the loadworkflow step
+      currentStepIndex: parentButtonGUID ? currentState.currentStepIndex : currentState.currentStepIndex + 1,
       rows: clearWindow ? [] : currentState.rows, // Only save rows if not clearing window
+      clearedWindow: clearWindow, // Track if we cleared the window
+      fromLoadWorkflow: !parentButtonGUID, // Track if this was from a loadworkflow step
     };
     
     set((state) => ({
@@ -139,6 +166,8 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       currentStepIndex: 0,
       // Clear rows if ClearWindow is true, otherwise keep them
       ...(clearWindow ? { rows: [] } : {}),
+      // IMPORTANT: Never clear notes when loading sub-workflow
+      // Notes persist for the entire interaction
     }));
     
     // Process the sub-workflow steps
@@ -150,6 +179,13 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     const stack = [...state.workflowStack];
     const parentState = stack.pop();
     
+    console.log('[returnFromSubWorkflow] Called:', {
+      hasParentState: !!parentState,
+      stackDepth: stack.length,
+      parentWorkflow: parentState?.workflow?.WorkflowName,
+      fromLoadWorkflow: parentState?.fromLoadWorkflow
+    });
+    
     if (parentState) {
       const currentRows = state.rows;
       
@@ -158,20 +194,31 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
         workflowStack: stack,
         pendingSteps: parentState.pendingSteps,
         currentStepIndex: parentState.currentStepIndex,
-        // If parent had saved rows (ClearWindow was used), restore them and append current rows
-        // Otherwise keep all current rows
-        rows: parentState.rows.length === 0 && currentRows.length > 0 
-          ? currentRows // Keep sub-workflow rows if parent had none saved
+        // If ClearWindow was used, don't keep sub-workflow rows
+        // Otherwise, combine parent and sub-workflow rows
+        rows: parentState.clearedWindow 
+          ? parentState.rows // Return to parent's (empty) rows, discarding sub-workflow rows
           : [...parentState.rows, ...currentRows], // Combine parent and sub-workflow rows
       });
       
-      // Continue processing parent workflow steps
-      setTimeout(() => get().processNextStep(), 100);
+      console.log('[returnFromSubWorkflow] Restored parent state, continuing at step index:', parentState.currentStepIndex);
+      
+      // Only continue processing if the parent has more steps
+      // This prevents cascading returns through all parent workflows
+      if (parentState.currentStepIndex < parentState.pendingSteps.length) {
+        setTimeout(() => get().processNextStep(), 100);
+      } else {
+        console.log('[returnFromSubWorkflow] Parent workflow is also complete - stopping');
+      }
     } else {
-      // No parent workflow, end session
+      console.log('[returnFromSubWorkflow] No parent workflow - workflow complete');
+      // No parent workflow, workflow is complete - do NOT clear the currentWorkflow
+      // Just mark that we're done processing by clearing the pending steps
+      // This prevents the workflow from restarting
       set({
-        currentWorkflow: null,
-        workflowStack: [],
+        pendingSteps: [],
+        currentStepIndex: 0,
+        // Keep currentWorkflow set to prevent reload
       });
     }
   },
@@ -202,18 +249,32 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   
   processNextStep: () => {
     const state = get();
-    const { pendingSteps, currentStepIndex, currentWorkflow, rows, workflowStack } = state;
+    const { pendingSteps, currentStepIndex, currentWorkflow, rows, workflowStack, currentParentButtonGUID } = state;
+    
+    console.log('[processNextStep] Called:', {
+      currentStepIndex,
+      pendingStepsLength: pendingSteps?.length || 0,
+      currentWorkflow: currentWorkflow?.WorkflowName,
+      workflowStackDepth: workflowStack.length,
+      currentParentButtonGUID
+    });
     
     if (!pendingSteps || currentStepIndex >= pendingSteps.length) {
-      console.log('No more steps to process');
+      console.log('[processNextStep] No more steps to process in', currentWorkflow?.WorkflowName);
       
       // Clear parent button GUID when done with substeps
       set({ currentParentButtonGUID: undefined });
       
-      // Check if we're in a sub-workflow and should return to parent
-      if (workflowStack.length > 0) {
-        console.log('Sub-workflow complete, returning to parent workflow');
+      // Only return to parent if we have substeps to return from (indicated by parentButtonGUID)
+      // If we loaded a sub-workflow (not substeps), we should NOT automatically return
+      if (currentParentButtonGUID && workflowStack.length > 0) {
+        console.log('[processNextStep] Returning from substeps to parent workflow');
         state.returnFromSubWorkflow();
+      } else if (workflowStack.length > 0) {
+        // We're in a sub-workflow but it's complete - don't automatically return
+        console.log('[processNextStep] Sub-workflow complete - workflow chain ended');
+      } else {
+        console.log('[processNextStep] Main workflow complete');
       }
       
       return;
@@ -237,6 +298,24 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     
     if (step.StepType.toLowerCase() === 'variableassignment') {
       // Process variable assignments without creating UI rows
+      if (step.VariableAssignments && Array.isArray(step.VariableAssignments)) {
+        // Import variable store to set variables
+        import('./variableStore').then(({ useVariableStore, VariableType }) => {
+          const variableState = useVariableStore.getState();
+          
+          step.VariableAssignments.forEach((assignment: any) => {
+            if (assignment.VariableName && assignment.VariableValue !== undefined) {
+              console.log(`Setting variable from VariableAssignment: ${assignment.VariableName} = ${assignment.VariableValue}`);
+              variableState.setVariable(
+                assignment.VariableName,
+                assignment.VariableValue,
+                VariableType.WorkflowVariable
+              );
+            }
+          });
+        });
+      }
+      
       // Move to next step immediately
       set((state) => ({ currentStepIndex: state.currentStepIndex + 1 }));
       state.processNextStep();
@@ -247,8 +326,10 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       // Handle sub-workflow loading
       console.log('Processing loadworkflow step for workflow name:', step.WorkflowName);
       
-      // Check if we should clear the window
-      const shouldClearWindow = step.ClearWindow === 'true' || step.ClearWindow === true;
+      // Check if we should clear the window (case-insensitive)
+      const shouldClearWindow = 
+        step.ClearWindow === true || 
+        (typeof step.ClearWindow === 'string' && step.ClearWindow.toLowerCase() === 'true');
       console.log('ClearWindow:', step.ClearWindow, 'shouldClearWindow:', shouldClearWindow);
       
       // Load the sub-workflow asynchronously
@@ -260,8 +341,9 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
               console.log('Successfully loaded sub-workflow:', subWorkflow.WorkflowName);
               
               // Load the sub-workflow and continue processing
+              // Don't pass parentButtonGUID for loadworkflow steps - only for answer substeps
               const state = get();
-              state.loadSubWorkflow(subWorkflow, step.GUID, shouldClearWindow);
+              state.loadSubWorkflow(subWorkflow, undefined, shouldClearWindow);
             })
             .catch(error => {
               console.error('Failed to load sub-workflow:', step.WorkflowName, error);
@@ -331,6 +413,15 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     const answer = row.step.Answers?.find((a) => a.GUID === answerId);
     
     if (!answer) return;
+    
+    console.log('[answerQuestion] Answering:', {
+      stepPrompt: row.step.Prompt?.substring(0, 50),
+      answerText: answer.Prompt,
+      hasSubSteps: !!(answer.SubSteps && answer.SubSteps.length > 0),
+      currentStepIndex: state.currentStepIndex,
+      pendingStepsLength: state.pendingSteps.length,
+      workflowStackDepth: state.workflowStack.length
+    });
     
     // Check if this is a change of answer
     const isChangingAnswer = row.answered && row.selectedAnswerGUID !== answerId;
@@ -431,18 +522,19 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     // Update rows first
     set({ rows });
     
-    // Generate notes if template exists
-    if (answer.NotesTemplate) {
+    // Generate notes if template exists (check both NotesTemplate and NoteGeneration)
+    const noteTemplate = answer.NotesTemplate || answer.NoteGeneration;
+    if (noteTemplate) {
       // Import variable store to interpolate variables in notes
       import('./variableStore').then(({ useVariableStore }) => {
         const variableState = useVariableStore.getState();
-        const interpolatedNote = variableState.interpolateText(answer.NotesTemplate);
+        const interpolatedNote = variableState.interpolateText(noteTemplate);
         
         // If changing answer, we might want to replace the previous note
         // For now, we'll append it
         const notes = state.notes + (state.notes ? '\n' : '') + interpolatedNote;
         set({ notes });
-        console.log('Generated notes:', interpolatedNote);
+        console.log('Generated notes from answer:', interpolatedNote);
       });
     }
     
@@ -463,8 +555,11 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       setTimeout(() => get().processNextStep(), 100);
     } else if (!isChangingAnswer) {
       // No substeps - move to next step in queue
+      console.log('[answerQuestion] No substeps, moving to next step');
       set((state) => ({ currentStepIndex: state.currentStepIndex + 1 }));
       setTimeout(() => get().processNextStep(), 100);
+    } else {
+      console.log('[answerQuestion] Answer changed but no substeps to process');
     }
   },
 
@@ -523,16 +618,73 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   },
 
   endSession: () => {
+    // Check if we're in an interaction before clearing notes
+    const interactionStore = useInteractionStore.getState();
+    const shouldPreserveNotes = interactionStore.isInInteraction();
+    
     set({
       currentWorkflow: null,
       workflowStack: [],
       rows: [],
-      notes: '',
+      // Only clear notes if NOT in an interaction
+      ...(shouldPreserveNotes ? {} : { notes: '' }),
       currentRowIndex: 0,
       pendingSteps: [],
       currentStepIndex: 0,
       interactionGUID: '',
       workflowGUID: '',
     });
+  },
+
+  preloadReferencedWorkflows: (workflow) => {
+    if (!workflow || !workflow.Steps) return;
+    
+    // Find all loadworkflow steps and their referenced workflows
+    const workflowsToPreload = new Set<string>();
+    
+    const findLoadWorkflowSteps = (steps: any[]) => {
+      steps.forEach(step => {
+        // Check if this is a loadworkflow step
+        if (step.StepType?.toLowerCase() === 'loadworkflow' && step.WorkflowName) {
+          workflowsToPreload.add(step.WorkflowName);
+        }
+        
+        // Check answers for substeps
+        if (step.Answers && Array.isArray(step.Answers)) {
+          step.Answers.forEach((answer: any) => {
+            if (answer.SubSteps && Array.isArray(answer.SubSteps)) {
+              findLoadWorkflowSteps(answer.SubSteps);
+            }
+          });
+        }
+      });
+    };
+    
+    findLoadWorkflowSteps(workflow.Steps);
+    
+    // Preload each workflow into cache
+    if (workflowsToPreload.size > 0) {
+      console.log('[preloadReferencedWorkflows] Preloading workflows:', Array.from(workflowsToPreload));
+      
+      import('../services/api/workflows').then(({ workflowService }) => {
+        workflowsToPreload.forEach(workflowName => {
+          // Check if already cached
+          const cached = workflowService.getCachedWorkflowByName(workflowName);
+          if (!cached) {
+            // Fetch and cache it
+            workflowService.getWorkflowByName(workflowName)
+              .then(subWorkflow => {
+                console.log('[preloadReferencedWorkflows] Cached workflow:', workflowName);
+                // The getWorkflowByName already caches it
+              })
+              .catch(error => {
+                console.error('[preloadReferencedWorkflows] Failed to preload workflow:', workflowName, error);
+              });
+          } else {
+            console.log('[preloadReferencedWorkflows] Workflow already cached:', workflowName);
+          }
+        });
+      });
+    }
   },
 }));

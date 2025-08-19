@@ -52,19 +52,25 @@ export class EvaluateFormulaProcessor {
   private static evaluateCondition(condition: string): string {
     const variableStore = useVariableStore.getState();
     
-    // Parse the condition - format: variable.operation(value) or variable.property
-    const parts = condition.split('.');
-    if (parts.length < 2) {
-      // Simple variable check
+    // Find operation patterns (Empty, NotEmpty, Equals(), Contains(), etc.) - case insensitive
+    const operationMatch = condition.match(/\.(empty|notempty|equals|contains|greaterthan|lessthan|startswith|endswith)(\([^)]*\))?$/i);
+    
+    if (!operationMatch) {
+      // No operation, just evaluate the variable itself
       const value = this.getVariableValue(condition);
+      console.log(`    Evaluating variable: ${condition} = ${value}`);
       return value ? 'true' : 'false';
     }
     
-    const variableName = parts[0];
-    const operation = parts.slice(1).join('.');
+    // Extract variable name and operation
+    const variableName = condition.substring(0, operationMatch.index);
+    const operation = condition.substring(operationMatch.index! + 1);
     
     // Get variable value
     let value = this.getVariableValue(variableName);
+    
+    // Log the variable being evaluated
+    console.log(`    Evaluating: ${variableName} = ${value}, Operation: ${operation}`);
     
     // Special variables
     if (variableName.toLowerCase() === 'today') {
@@ -105,10 +111,15 @@ export class EvaluateFormulaProcessor {
   private static getVariableValue(name: string): any {
     const variableStore = useVariableStore.getState();
     
-    // Handle customer variables
+    // Handle customer variables (Customer.COFA -> check for customer_cofa variable)
     if (name.toLowerCase().startsWith('customer.')) {
-      const customerVarName = name.substring(9);
-      return variableStore.getVariable('customer_' + customerVarName);
+      const customerVarName = name.substring(9); // Remove "Customer." prefix
+      // Try with underscore prefix (customer_cofa) and without (cofa)
+      let value = variableStore.getVariable('customer_' + customerVarName);
+      if (value === undefined || value === null) {
+        value = variableStore.getVariable(customerVarName);
+      }
+      return value;
     }
     
     return variableStore.getVariable(name);
@@ -137,6 +148,13 @@ export class EvaluateFormulaProcessor {
     
     switch (operation) {
       case 'equals':
+        // Special handling for boolean comparisons
+        if (strParam.toLowerCase() === 'true' || strParam.toLowerCase() === 'false') {
+          const boolValue = value === true || value === 'true' || value === 'True' || value === 'TRUE' || value === 1 || value === '1';
+          const compareBool = strParam.toLowerCase() === 'true';
+          return boolValue === compareBool ? 'true' : 'false';
+        }
+        // Case-insensitive string comparison
         return strValue.toLowerCase() === strParam.toLowerCase() ? 'true' : 'false';
         
       case 'notequals':

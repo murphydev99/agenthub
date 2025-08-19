@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
 interface WorkflowExecution {
@@ -24,6 +23,7 @@ interface InteractionState {
   
   // Actions
   toggleInteractionMode: () => void;
+  setInteractionMode: (enabled: boolean) => void;
   startInteraction: () => string;
   endInteraction: () => void;
   addWorkflowToInteraction: (workflowUID: string, workflowName: string) => void;
@@ -33,11 +33,9 @@ interface InteractionState {
   isInInteraction: () => boolean;
 }
 
-export const useInteractionStore = create<InteractionState>()(
-  persist(
-    (set, get) => ({
-      // Initial state
-      interactionMode: false,
+export const useInteractionStore = create<InteractionState>()((set, get) => ({
+      // Initial state - load interactionMode from localStorage
+      interactionMode: localStorage.getItem('interactionMode') === 'true',
       currentInteractionGUID: null,
       interactionStartTime: null,
       interactionWorkflows: [],
@@ -58,6 +56,26 @@ export const useInteractionStore = create<InteractionState>()(
             };
           }
           return { interactionMode: newMode };
+        });
+      },
+      
+      // Set interaction mode to specific value
+      setInteractionMode: (enabled: boolean) => {
+        // Persist to localStorage
+        localStorage.setItem('interactionMode', enabled.toString());
+        
+        set((state) => {
+          // If turning off interaction mode, end any active interaction
+          if (!enabled && state.currentInteractionGUID) {
+            return {
+              interactionMode: enabled,
+              currentInteractionGUID: null,
+              interactionStartTime: null,
+              interactionWorkflows: [],
+              sharedNotes: '',
+            };
+          }
+          return { interactionMode: enabled };
         });
       },
       
@@ -141,16 +159,4 @@ export const useInteractionStore = create<InteractionState>()(
         const state = get();
         return state.interactionMode && state.currentInteractionGUID !== null;
       },
-    }),
-    {
-      name: 'interaction-storage',
-      partialize: (state) => ({
-        interactionMode: state.interactionMode,
-        currentInteractionGUID: state.currentInteractionGUID,
-        interactionStartTime: state.interactionStartTime,
-        interactionWorkflows: state.interactionWorkflows,
-        sharedNotes: state.sharedNotes,
-      }),
-    }
-  )
-);
+    }));

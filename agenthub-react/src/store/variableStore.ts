@@ -42,6 +42,39 @@ interface VariableState {
   initSystemVariables: (interactionGUID: string, workflowGUID: string, username?: string) => void;
 }
 
+// Helper function for testing - allows setting customer variables from console
+// Usage: window.setCustomerVariable('COFA', true)
+if (typeof window !== 'undefined') {
+  (window as any).setCustomerVariable = (name: string, value: any) => {
+    const store = useVariableStore.getState();
+    store.setVariable(`customer_${name.toLowerCase()}`, value, VariableType.CustomerVariable);
+    console.log(`Set Customer.${name} = ${value}`);
+  };
+  
+  (window as any).getCustomerVariable = (name: string) => {
+    const store = useVariableStore.getState();
+    const value = store.getVariable(`customer_${name.toLowerCase()}`);
+    console.log(`Customer.${name} = ${value}`);
+    return value;
+  };
+  
+  (window as any).listAllVariables = () => {
+    const store = useVariableStore.getState();
+    console.log('=== Customer Variables ===');
+    store.customerVariables.forEach((value, key) => {
+      console.log(`  ${key}: ${value}`);
+    });
+    console.log('=== Workflow Variables ===');
+    store.workflowVariables.forEach((value, key) => {
+      console.log(`  ${key}: ${value}`);
+    });
+    console.log('=== System Variables ===');
+    store.systemVariables.forEach((value, key) => {
+      console.log(`  ${key}: ${value}`);
+    });
+  };
+}
+
 export const useVariableStore = create<VariableState>()(
   persist(
     (set, get) => ({
@@ -143,8 +176,17 @@ export const useVariableStore = create<VariableState>()(
         
         // Replace ~#varName#~ or ~varName~ patterns
         return text.replace(/~#?([^~#]+)#?~/g, (match, varName) => {
-          const value = get().getVariable(varName.trim());
-          return value !== null && value !== undefined ? String(value) : match;
+          const cleanVarName = varName.trim();
+          const value = get().getVariable(cleanVarName);
+          
+          if (value !== null && value !== undefined) {
+            console.log(`Variable interpolation: ${match} -> ${value}`);
+            return String(value);
+          } else {
+            console.log(`Variable not found: ${cleanVarName} (keeping ${match})`);
+            // Return empty string for missing variables instead of the placeholder
+            return '';
+          }
         });
       },
 
@@ -205,6 +247,7 @@ export const useVariableStore = create<VariableState>()(
       initSystemVariables: (interactionGUID, workflowGUID, username) => {
         set((state) => {
           const systemVars = new Map(state.systemVariables);
+          const customerVars = new Map(state.customerVariables);
           
           systemVars.set('interactionguid', interactionGUID);
           systemVars.set('workflowguid', workflowGUID);
@@ -216,7 +259,22 @@ export const useVariableStore = create<VariableState>()(
           systemVars.set('today', new Date().toISOString().split('T')[0]);
           systemVars.set('now', new Date().toISOString());
           
-          return { systemVariables: systemVars };
+          // For testing: Set some sample customer variables
+          // In production, these would come from the integration
+          // TODO: Remove these test values when integrating with real customer data
+          customerVars.set('customer_cofa', false);
+          customerVars.set('customer_tribal', false);
+          customerVars.set('customer_arid', '');
+          customerVars.set('customer_spousename', '');
+          
+          // Set LEPAuthNote for testing
+          // This would normally be set based on workflow logic
+          systemVars.set('lepauthnote', '');
+          
+          return { 
+            systemVariables: systemVars,
+            customerVariables: customerVars
+          };
         });
       },
     }),
