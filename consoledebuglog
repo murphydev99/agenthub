@@ -1,0 +1,76 @@
+variableStore.ts:131 Clearing all variables
+WorkflowExecution.tsx:52 WorkflowExecution: Clearing state for id: MmEzYmE3YjQtNGM2Yi00ZDM4LWIzOTQtYWM3ODE5MDkyMzk5
+variableStore.ts:131 Clearing all variables
+WorkflowExecution.tsx:52 WorkflowExecution: Clearing state for id: MmEzYmE3YjQtNGM2Yi00ZDM4LWIzOTQtYWM3ODE5MDkyMzk5
+variableStore.ts:131 Clearing all variables
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: null
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: []
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: null
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: []
+WorkflowExecution.tsx:68 WorkflowExecution: Loading workflow: ICT Selections
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'ICT Selections', WorkflowUID: '2a3ba7b4-4c6b-4d38-b394-ac7819092399', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: []
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'ICT Selections', WorkflowUID: '2a3ba7b4-4c6b-4d38-b394-ac7819092399', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: []
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'ICT Selections', WorkflowUID: '2a3ba7b4-4c6b-4d38-b394-ac7819092399', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: []
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'ICT Selections', WorkflowUID: '2a3ba7b4-4c6b-4d38-b394-ac7819092399', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: []
+workflowStore.ts:172 Processing steps: [{…}]
+workflowStore.ts:212 Processing step: question {AnswerFormat: 'Buttons', SecondLevelPrompt: '', StepType: 'question', GUID: '29c59dd2-17e4-4b42-b66a-51068b4e4a12', Prompt: '\r\nSelect the reason for the call:', …}
+workflowStore.ts:298 Adding row: {id: '14c48206-a1fa-484d-9087-599f58d8f7d9', step: {…}, workflowName: 'ICT Selections', parentButtonGUID: undefined, answered: false, …}
+workflowStore.ts:302 Total rows after add: 1
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'ICT Selections', WorkflowUID: '2a3ba7b4-4c6b-4d38-b394-ac7819092399', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: [{…}]
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'ICT Selections', WorkflowUID: '2a3ba7b4-4c6b-4d38-b394-ac7819092399', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: [{…}]
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'ICT Selections', WorkflowUID: '2a3ba7b4-4c6b-4d38-b394-ac7819092399', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: [{…}]
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'ICT Selections', WorkflowUID: '2a3ba7b4-4c6b-4d38-b394-ac7819092399', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: [{…}]
+workflowStore.ts:212 Processing step: variableassignment {StepType: 'variableassignment', GUID: '08d5cb2d-1664-43bf-8af2-6f2925f80baf', Prompt: '', VariableAssignments: Array(1), Answers: Array(0)}
+workflowStore.ts:212 Processing step: loadworkflow {WorkflowName: 'WAHBE Renewal Main', StepType: 'loadworkflow', GUID: '4d3551d3-ca79-4559-bbec-b9ba6b2f60e7', Answers: Array(0)}
+workflowStore.ts:237 Processing loadworkflow step for workflow name: WAHBE Renewal Main
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'ICT Selections', WorkflowUID: '2a3ba7b4-4c6b-4d38-b394-ac7819092399', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: [{…}]
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'ICT Selections', WorkflowUID: '2a3ba7b4-4c6b-4d38-b394-ac7819092399', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: [{…}]
+workflowStore.ts:245 Successfully loaded sub-workflow: WAHBE Renewal Main
+workflowStore.ts:172 Processing steps: (2) [{…}, {…}]
+workflowStore.ts:212 Processing step: userinstruction {SecondLevelPrompt: '', StepType: 'userinstruction', GUID: '1dd4e997-28ae-4073-b957-d0ddfebfa7d5', Prompt: 'Flow is used to expedite the renewal notes and tax…shington Apple Health and Qualified Health Plans.', Answers: Array(0)}
+workflowStore.ts:298 Adding row: {id: '69d507dd-f230-447e-893f-6abc7f9227cc', step: {…}, workflowName: 'WAHBE Renewal Main', parentButtonGUID: undefined, answered: false, …}
+workflowStore.ts:302 Total rows after add: 2
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Main', WorkflowUID: '4e1d1192-6826-4c7f-b00f-d97e2f792c11', WorkflowDataVersion: '2.1', Steps: Array(2)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: (2) [{…}, {…}]
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Main', WorkflowUID: '4e1d1192-6826-4c7f-b00f-d97e2f792c11', WorkflowDataVersion: '2.1', Steps: Array(2)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: (2) [{…}, {…}]
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Main', WorkflowUID: '4e1d1192-6826-4c7f-b00f-d97e2f792c11', WorkflowDataVersion: '2.1', Steps: Array(2)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: []
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Main', WorkflowUID: '4e1d1192-6826-4c7f-b00f-d97e2f792c11', WorkflowDataVersion: '2.1', Steps: Array(2)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: []
+workflowStore.ts:212 Processing step: question {AnswerFormat: 'Buttons', StepType: 'question', GUID: 'b4ccbb15-cf86-4e2a-a1ca-0bbae9f01689', Prompt: 'What was the customers most recent eligibility when they attempted to contact?', Answers: Array(4)}
+workflowStore.ts:298 Adding row: {id: 'fef3f14f-f83f-4ff2-9116-b108050e2815', step: {…}, workflowName: 'WAHBE Renewal Main', parentButtonGUID: undefined, answered: false, …}
+workflowStore.ts:302 Total rows after add: 1
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Main', WorkflowUID: '4e1d1192-6826-4c7f-b00f-d97e2f792c11', WorkflowDataVersion: '2.1', Steps: Array(2)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: [{…}]
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Main', WorkflowUID: '4e1d1192-6826-4c7f-b00f-d97e2f792c11', WorkflowDataVersion: '2.1', Steps: Array(2)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: [{…}]
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Main', WorkflowUID: '4e1d1192-6826-4c7f-b00f-d97e2f792c11', WorkflowDataVersion: '2.1', Steps: Array(2)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: [{…}]
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Main', WorkflowUID: '4e1d1192-6826-4c7f-b00f-d97e2f792c11', WorkflowDataVersion: '2.1', Steps: Array(2)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: [{…}]
+workflowStore.ts:212 Processing step: loadworkflow {WorkflowName: 'WAHBE Renewal Apple Health', StepType: 'loadworkflow', GUID: '913f523b-dcc4-42af-9982-3d0285bc1c29', Answers: Array(0)}
+workflowStore.ts:237 Processing loadworkflow step for workflow name: WAHBE Renewal Apple Health
+workflowStore.ts:245 Successfully loaded sub-workflow: WAHBE Renewal Apple Health
+workflowStore.ts:172 Processing steps: [{…}]
+workflowStore.ts:212 Processing step: question {AnswerFormat: 'Buttons', StepType: 'question', GUID: '133cb2b8-c79a-4afe-a1ae-8bb14ac97ca5', Prompt: 'Was the application completed?', Answers: Array(2)}
+workflowStore.ts:298 Adding row: {id: '12c6091d-a035-430f-9765-cdf5a4beedba', step: {…}, workflowName: 'WAHBE Renewal Apple Health', parentButtonGUID: undefined, answered: false, …}
+workflowStore.ts:302 Total rows after add: 2
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Apple Health', WorkflowUID: '9ff4ff92-d440-4ca5-b5c4-072ab62e130c', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: (2) [{…}, {…}]
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Apple Health', WorkflowUID: '9ff4ff92-d440-4ca5-b5c4-072ab62e130c', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: (2) [{…}, {…}]
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Apple Health', WorkflowUID: '9ff4ff92-d440-4ca5-b5c4-072ab62e130c', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: []
+WorkflowRenderer.tsx:24 WorkflowRenderer - currentWorkflow: {WorkflowName: 'WAHBE Renewal Apple Health', WorkflowUID: '9ff4ff92-d440-4ca5-b5c4-072ab62e130c', WorkflowDataVersion: '2.1', Steps: Array(1)}
+WorkflowRenderer.tsx:25 WorkflowRenderer - rows: []
