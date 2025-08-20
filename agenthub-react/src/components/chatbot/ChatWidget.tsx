@@ -211,13 +211,23 @@ Matching rules:
 1. First check if the user's request matches any ALIAS text (the part in quotes)
 2. Then check if it matches the workflow name
 3. Look for semantic matches, not just exact word matches
+4. Consider synonyms and related terms (price/cost/fee, how much/what's the price/cost of)
 
 Examples:
 - "I wonder if I can get an irish passport" → matches alias "irish passport"
 - "Seans Customer Service" or "customer service" → matches alias "Seans Customer Service"
 - "check snap eligibility" → matches alias "snap-eligibility"
+- "food stamps", "food assistance", "EBT", "SNAP benefits" → matches alias "snap-eligibility"
 - "am I eligible for food stamps" → matches alias "snap-eligibility" (semantic match)
-- Any request about passports from Ireland → matches alias "irish passport"`;
+- "how much is an MRI", "MRI price", "cost of MRI scan" → matches alias "MRI Cost Estimation"
+- "what does an MRI cost", "MRI fees", "price for MRI" → matches alias "MRI Cost Estimation"
+- Any request about passports from Ireland → matches alias "irish passport"
+
+IMPORTANT CONTEXT:
+- "SNAP" stands for Supplemental Nutrition Assistance Program (formerly food stamps)
+- Match any queries about food assistance, food stamps, EBT, or nutritional aid to SNAP-related workflows
+- For pricing questions, match variations like "how much is", "what's the price", "cost of", "fees for", etc.
+- Be flexible with word order and phrasing - "how much is an MRI" = "MRI cost" = "price of MRI"`;
 
       const response = await OpenAIService.chat({
         messages: [
