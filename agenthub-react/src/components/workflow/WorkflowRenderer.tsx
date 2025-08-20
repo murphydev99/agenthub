@@ -6,7 +6,7 @@ import { useInteractionStore } from '../../store/interactionStore';
 import { StepRenderer } from './StepRenderer';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
-import { RotateCcw, Users, X, FileText, Clock, Home, Copy } from 'lucide-react';
+import { RotateCcw, Users, X, FileText, Clock, Home, Copy, Shield, Zap, Activity, Sparkles, ArrowLeft } from 'lucide-react';
 import { showConfirmDialog } from '../ui/confirm-dialog';
 
 interface WorkflowRendererProps {
@@ -127,12 +127,15 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
     : 0;
 
   return (
-    <div className="h-full flex">
+    <div className="h-full flex bg-gradient-to-br from-gray-50 via-white to-blue-50">
       {/* Left Sidebar */}
-      <div className="w-64 border-r bg-gray-50 flex flex-col">
+      <div className="w-64 bg-white/80 backdrop-blur-sm border-r border-gray-200/50 flex flex-col shadow-xl">
         {/* Sidebar Header */}
-        <div className="p-4 border-b bg-white">
-          <h3 className="font-semibold text-gray-800">Navigation</h3>
+        <div className="p-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-50 to-purple-50">
+          <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-purple-500" />
+            Navigation
+          </h3>
         </div>
         
         {/* Navigation Buttons */}
@@ -141,9 +144,9 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
             variant="outline"
             size="sm"
             onClick={handleBackToDashboard}
-            className="w-full justify-start"
+            className="w-full justify-start hover:bg-blue-50 hover:border-blue-300 transition-colors"
           >
-            <Home className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
           
@@ -152,7 +155,7 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
               variant="destructive"
               size="sm"
               onClick={handleEndInteraction}
-              className="w-full justify-start"
+              className="w-full justify-start bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 border-0 text-white shadow-md"
             >
               <X className="h-4 w-4 mr-2" />
               End Interaction
@@ -163,7 +166,7 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
             variant="outline"
             size="sm"
             onClick={handleRestart}
-            className="w-full justify-start"
+            className="w-full justify-start hover:bg-purple-50 hover:border-purple-300 transition-colors"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Restart Workflow
@@ -172,43 +175,49 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
         
         {/* Interaction Status in Sidebar */}
         {isInteractionMode && currentInteractionGUID && (
-          <div className="flex-1 flex flex-col border-t">
-            <div className="p-4">
+          <div className="flex-1 flex flex-col border-t border-gray-200/50">
+            <div className="p-4 bg-gradient-to-br from-blue-50/50 to-purple-50/50">
               <div className="flex items-center space-x-2 mb-3">
-                <Users className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold">Active Interaction</h3>
+                <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md">
+                  <Shield className="h-4 w-4" />
+                </div>
+                <h3 className="font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Active Interaction</h3>
               </div>
               
               <div className="space-y-3 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">Session ID</p>
-                  <p className="font-mono text-xs">{currentInteractionGUID.slice(0, 8)}...</p>
+                <div className="bg-white/70 backdrop-blur rounded-lg p-2">
+                  <p className="text-xs text-gray-500 font-medium">Session ID</p>
+                  <p className="font-mono text-xs bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold">{currentInteractionGUID.slice(0, 8)}...</p>
                 </div>
                 
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 bg-white/70 backdrop-blur rounded-lg p-2">
                   <div className="flex items-center space-x-1">
-                    <FileText className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-xs">{interactionWorkflows.length} workflow{interactionWorkflows.length !== 1 ? 's' : ''}</span>
+                    <FileText className="h-3 w-3 text-blue-500" />
+                    <span className="text-xs font-medium">{interactionWorkflows.length} workflow{interactionWorkflows.length !== 1 ? 's' : ''}</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-xs">{duration} min</span>
+                    <Clock className="h-3 w-3 text-purple-500" />
+                    <span className="text-xs font-medium">{duration} min</span>
                   </div>
                 </div>
                 
                 {/* Workflow List */}
                 {interactionWorkflows.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium mb-2">Workflows:</p>
+                    <p className="text-xs font-medium mb-2 text-gray-600">Workflows:</p>
                     <div className="space-y-1 max-h-48 overflow-y-auto">
                       {interactionWorkflows.map((w, idx) => (
-                        <div key={idx} className="text-xs bg-white p-2 rounded border">
-                          <div className="font-medium">{idx + 1}. {w.workflowName}</div>
-                          <div className={`text-xs mt-1 ${
+                        <div key={idx} className="text-xs bg-white/70 backdrop-blur p-2 rounded-lg border border-gray-200/50 hover:shadow-md transition-shadow">
+                          <div className="font-medium flex items-center gap-1">
+                            <span className="text-purple-600">{idx + 1}.</span>
+                            {w.workflowName}
+                          </div>
+                          <div className={`text-xs mt-1 flex items-center gap-1 ${
                             w.status === 'completed' ? 'text-green-600' : 
                             w.status === 'running' ? 'text-blue-600' : 
                             'text-gray-600'
                           }`}>
+                            {w.status === 'running' && <Activity className="h-3 w-3 animate-pulse" />}
                             Status: {w.status}
                           </div>
                         </div>
@@ -220,8 +229,8 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
                 {/* Shared Notes */}
                 {sharedNotes && (
                   <div>
-                    <p className="text-xs font-medium mb-2">Shared Notes:</p>
-                    <div className="text-xs bg-white p-2 rounded border max-h-32 overflow-y-auto whitespace-pre-wrap">
+                    <p className="text-xs font-medium mb-2 text-gray-600">Shared Notes:</p>
+                    <div className="text-xs bg-white/70 backdrop-blur p-2 rounded-lg border border-gray-200/50 max-h-32 overflow-y-auto whitespace-pre-wrap">
                       {sharedNotes}
                     </div>
                   </div>
@@ -232,12 +241,14 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
         )}
         
         {/* Notes Panel - Always visible in sidebar */}
-        <div className="flex-1 flex flex-col border-t overflow-hidden">
-          <div className="p-4">
+        <div className="flex-1 flex flex-col border-t border-gray-200/50 overflow-hidden">
+          <div className="p-4 bg-gradient-to-br from-green-50/50 to-blue-50/50">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold">Notes</h3>
+                <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-md">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <h3 className="font-semibold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Notes</h3>
               </div>
               <Button
                 variant="outline"
@@ -251,15 +262,15 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
                   }
                 }}
                 disabled={!notes}
-                className="h-7"
+                className="h-7 hover:bg-blue-50 hover:border-blue-300 transition-colors"
               >
                 <Copy className="h-3 w-3 mr-1" />
                 Copy
               </Button>
             </div>
-            <div className="bg-white border rounded p-3 h-64 overflow-y-auto">
-              <pre className="text-xs whitespace-pre-wrap font-mono">
-                {notes || 'No notes yet...'}
+            <div className="bg-white/70 backdrop-blur border border-gray-200/50 rounded-lg p-3 h-64 overflow-y-auto shadow-inner">
+              <pre className="text-xs whitespace-pre-wrap font-mono text-gray-700">
+                {notes || <span className="text-gray-400 italic">No notes yet...</span>}
               </pre>
             </div>
           </div>
@@ -269,14 +280,29 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="border-b bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-3">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800">{currentWorkflow.WorkflowName}</h2>
-            <p className="text-sm text-gray-600">
-              {workflowStack && workflowStack.length > 0 
-                ? `Sub-workflow (${workflowStack.length} level${workflowStack.length > 1 ? 's' : ''} deep)`
-                : 'Workflow Execution'}
-            </p>
+        <div className="border-b border-gray-200/50 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 px-6 py-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md">
+              <Zap className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                {currentWorkflow.WorkflowName}
+              </h2>
+              <p className="text-sm text-gray-600 flex items-center gap-1">
+                {workflowStack && workflowStack.length > 0 ? (
+                  <>
+                    <Activity className="h-3 w-3" />
+                    Sub-workflow ({workflowStack.length} level{workflowStack.length > 1 ? 's' : ''} deep)
+                  </>
+                ) : (
+                  <>
+                    <Shield className="h-3 w-3" />
+                    Workflow Execution
+                  </>
+                )}
+              </p>
+            </div>
           </div>
         </div>
 

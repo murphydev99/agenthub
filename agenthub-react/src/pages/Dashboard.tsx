@@ -196,17 +196,14 @@ export function Dashboard() {
         {/* Animated Header */}
         <div className="mb-8">
           <div className="flex justify-between items-start">
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-20"></div>
-              <div className="relative">
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  AgentHub Dashboard
-                </h2>
-                <p className="text-gray-600 mt-2 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-purple-500" />
-                  Welcome to the next-generation workflow system
-                </p>
-              </div>
+            <div>
+              <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                AgentHub Dashboard
+              </h2>
+              <p className="text-gray-600 mt-2 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-purple-500" />
+                Welcome to the next-generation workflow system
+              </p>
             </div>
           
             {/* Interaction Mode Toggle */}
@@ -301,71 +298,148 @@ export function Dashboard() {
         <div className="space-y-6">
           {/* Show Start Interaction button when in interaction mode */}
           {interactionMode ? (
-            <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600">
-              <div className="absolute inset-0 bg-black/10" />
-              <div className="relative">
-                <CardHeader className="text-white">
-                  <CardTitle className="text-2xl flex items-center gap-2">
-                    <Shield className="h-7 w-7" />
-                    Start New Interaction
-                  </CardTitle>
-                  <CardDescription className="text-white/80">
-                    Begin a secure customer interaction with authentication
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={async () => {
-                      // Start a new interaction
-                      if (!currentInteractionGUID) {
-                        startInteraction();
-                      }
-                      
-                      // Load the authenticate workflow
-                      try {
-                        // TODO: Make this configurable
-                        const authenticateAlias = 'authenticate';
-                        const encoded = btoa(authenticateAlias);
-                        navigate(`/w/${encoded}?interaction=true`);
-                      } catch (error) {
-                        console.error('Error starting interaction:', error);
-                      }
-                    }}
-                    className="w-full bg-white text-purple-600 hover:bg-white/90 font-bold shadow-lg"
-                    size="lg"
-                    disabled={currentInteractionGUID !== null}
-                  >
-                    {currentInteractionGUID ? (
-                      <>
-                        <Activity className="mr-2 h-5 w-5 animate-pulse" />
-                        Interaction In Progress
-                      </>
-                    ) : (
-                      <>
+            <>
+              {/* Start Interaction Card - Only show if no interaction is active */}
+              {!currentInteractionGUID ? (
+                <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600">
+                  <div className="absolute inset-0 bg-black/10" />
+                  <div className="relative">
+                    <CardHeader className="text-white">
+                      <CardTitle className="text-2xl flex items-center gap-2">
+                        <Shield className="h-7 w-7" />
+                        Start New Interaction
+                      </CardTitle>
+                      <CardDescription className="text-white/80">
+                        Begin a secure customer interaction with authentication
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button
+                        onClick={async () => {
+                          // Start a new interaction
+                          startInteraction();
+                          
+                          // Load the authenticate workflow
+                          try {
+                            // TODO: Make this configurable
+                            const authenticateAlias = 'authenticate';
+                            const encoded = btoa(authenticateAlias);
+                            navigate(`/w/${encoded}?interaction=true`);
+                          } catch (error) {
+                            console.error('Error starting interaction:', error);
+                          }
+                        }}
+                        className="w-full bg-white text-purple-600 hover:bg-white/90 font-bold shadow-lg"
+                        size="lg"
+                      >
                         <Zap className="mr-2 h-5 w-5" />
                         Start Secure Interaction
-                      </>
-                    )}
-                  </Button>
-              
-                  
-                  {currentInteractionGUID && (
-                    <div className="mt-4 p-4 bg-white/20 backdrop-blur rounded-lg text-white">
+                      </Button>
+                    </CardContent>
+                  </div>
+                </Card>
+              ) : (
+                /* Alias Search for Active Interaction */
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-purple-600 animate-pulse" />
+                      Launch Workflow
+                    </CardTitle>
+                    <CardDescription>
+                      Search and launch workflows within the active interaction
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium flex items-center gap-2">
-                          <Activity className="h-4 w-4 animate-pulse" />
-                          Active Session
-                        </p>
-                        <p className="text-xs font-mono bg-white/20 px-2 py-1 rounded">
-                          {currentInteractionGUID.slice(0, 8)}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium text-purple-700">Active Session</span>
+                        </div>
+                        <span className="text-xs font-mono bg-white/70 px-2 py-1 rounded text-purple-600">
+                          {currentInteractionGUID.slice(0, 8)}...
+                        </span>
                       </div>
-                      <p className="text-xs mt-2 text-white/80">{interactionWorkflows.length} workflow(s) executed</p>
+                      <p className="text-xs text-purple-600 mt-1">
+                        {interactionWorkflows.length} workflow{interactionWorkflows.length !== 1 ? 's' : ''} executed
+                      </p>
                     </div>
-                  )}
-                </CardContent>
-              </div>
-            </Card>
+                    
+                    <div className="relative">
+                      <div className="flex space-x-2">
+                        <div className="flex-1 relative">
+                          <Input
+                            ref={searchInputRef}
+                            placeholder="Enter workflow alias..."
+                            value={workflowAlias}
+                            onChange={(e) => setWorkflowAlias(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            onFocus={() => {
+                              if (filteredAliases.length > 0) {
+                                setShowSuggestions(true);
+                              }
+                            }}
+                            className="pr-10"
+                          />
+                          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                        </div>
+                        <Button 
+                          onClick={() => handleStartByAlias()} 
+                          disabled={!workflowAlias && filteredAliases.length === 0}
+                          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-md"
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          Launch
+                        </Button>
+                      </div>
+                      
+                      {/* Search Suggestions Dropdown */}
+                      {showSuggestions && filteredAliases.length > 0 && (
+                        <div 
+                          ref={suggestionsRef}
+                          className="absolute z-10 w-full mt-2 bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto"
+                        >
+                          {filteredAliases.map((item, index) => (
+                            <div
+                              key={item.AliasText}
+                              className={`px-4 py-3 cursor-pointer transition-colors ${
+                                index === selectedIndex 
+                                  ? 'bg-purple-50 border-l-2 border-purple-500' 
+                                  : 'hover:bg-gray-50'
+                              }`}
+                              onClick={() => handleStartByAlias(item)}
+                              onMouseEnter={() => setSelectedIndex(index)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm font-mono text-purple-600">
+                                    {item.AliasText}
+                                  </p>
+                                </div>
+                                <ArrowRight className="h-4 w-4 text-gray-400 ml-2" />
+                              </div>
+                            </div>
+                          ))}
+                          {filteredAliases.length > 0 && (
+                            <div className="px-4 py-2 text-xs text-gray-500 border-t">
+                              {filteredAliases.length} alias{filteredAliases.length !== 1 ? 'es' : ''} found
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* No results message */}
+                      {showSuggestions && workflowAlias && filteredAliases.length === 0 && (
+                        <div className="absolute z-10 w-full mt-2 bg-white border rounded-lg shadow-lg p-4">
+                          <p className="text-sm text-gray-500">No workflows found with alias "{workflowAlias}"</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           ) : (
             <>
             {/* Quick Start by Alias - Hidden in interaction mode */}
@@ -451,7 +525,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-            {/* Available Workflows - Hidden in interaction mode */}
+            {/* Available Workflows - Only show when NOT in interaction mode */}
             <Card className="border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50">
                 <CardTitle className="flex items-center gap-2">
