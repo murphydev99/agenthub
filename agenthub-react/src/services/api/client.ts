@@ -11,13 +11,19 @@ export const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token or API key
 apiClient.interceptors.request.use(
   (config) => {
+    // First check for Bearer token
     const token = localStorage.getItem('auth_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Also add x-api-key for API authentication (used by chatbot)
+    // This is the same key used in ChatWidget
+    config.headers['x-api-key'] = 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa';
+    
     return config;
   },
   (error) => {
