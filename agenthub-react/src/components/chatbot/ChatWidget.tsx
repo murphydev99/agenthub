@@ -5,6 +5,10 @@ import { useChatbotWorkflowStore } from '../../store/chatbotWorkflowStore';
 import { useVariableStore, VariableType } from '../../store/variableStore';
 import { OpenAIService } from '../../services/openai';
 
+// Use the same API URL as the rest of the app (can be configured for Azure)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_KEY = 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa';
+
 interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -170,9 +174,9 @@ export function ChatWidget({
 
   const fetchAliases = async () => {
     try {
-      const response = await fetch(`http://localhost:4000/api/aliases`, {
+      const response = await fetch(`${API_URL}/aliases`, {
         headers: {
-          'x-api-key': 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa'
+          'x-api-key': API_KEY
         }
       });
       
@@ -317,9 +321,9 @@ IMPORTANT CONTEXT:
       console.log('Searching for workflow by name:', matchedAlias.WorkflowName);
       
       // Use the search endpoint to find workflow by exact name
-      const searchResponse = await fetch(`http://localhost:4000/api/workflows/search?query=${encodeURIComponent(matchedAlias.WorkflowName)}`, {
+      const searchResponse = await fetch(`${API_URL}/workflows/search?query=${encodeURIComponent(matchedAlias.WorkflowName)}`, {
         headers: {
-          'x-api-key': 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa'
+          'x-api-key': API_KEY
         }
       });
       
@@ -342,9 +346,9 @@ IMPORTANT CONTEXT:
       }
       
       // Load the workflow
-      const response = await fetch(`http://localhost:4000/api/workflows/${matchedWorkflow.WorkflowUID}`, {
+      const response = await fetch(`${API_URL}/workflows/${matchedWorkflow.WorkflowUID}`, {
         headers: {
-          'x-api-key': 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa'
+          'x-api-key': API_KEY
         }
       });
       
@@ -406,9 +410,9 @@ IMPORTANT CONTEXT:
       
       if (workflowAlias) {
         // First, fetch aliases to find the workflow name
-        const aliasResponse = await fetch(`http://localhost:4000/api/aliases`, {
+        const aliasResponse = await fetch(`${API_URL}/aliases`, {
           headers: {
-            'x-api-key': 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa'
+            'x-api-key': API_KEY
           }
         });
         
@@ -426,9 +430,9 @@ IMPORTANT CONTEXT:
         }
         
         // Now fetch all workflows and find the one with matching name
-        const workflowsResponse = await fetch(`http://localhost:4000/api/workflows`, {
+        const workflowsResponse = await fetch(`${API_URL}/workflows`, {
           headers: {
-            'x-api-key': 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa'
+            'x-api-key': API_KEY
           }
         });
         
@@ -459,9 +463,9 @@ IMPORTANT CONTEXT:
         workflowData = await response.json();
       } else {
         // Fetch the workflow directly by ID
-        const response = await fetch(`http://localhost:4000/api/workflows/${workflowId}`, {
+        const response = await fetch(`${API_URL}/workflows/${workflowId}`, {
           headers: {
-            'x-api-key': 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa'
+            'x-api-key': API_KEY
           }
         });
         
