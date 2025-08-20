@@ -36,7 +36,7 @@ jobs:
         cd agenthub-react
         npm run build
       env:
-        VITE_API_BASE_URL: https://workflowcanvasapi.azurewebsites.net/api
+        VITE_API_URL: https://workflowcanvasapi.azurewebsites.net/api
         VITE_APP_ENV: production
 
     - name: Create deployment package
