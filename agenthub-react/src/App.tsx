@@ -6,6 +6,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Dashboard } from './pages/Dashboard';
 import { WorkflowExecution } from './pages/WorkflowExecution';
 import { ChatbotPage } from './pages/ChatbotPage';
+import { TokenManagement } from './pages/TokenManagement';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +29,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/workflow/:id" element={<WorkflowExecution />} />
               <Route path="/w/:id" element={<WorkflowExecution />} />
+              <Route path="/admin/tokens" element={<TokenManagement />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

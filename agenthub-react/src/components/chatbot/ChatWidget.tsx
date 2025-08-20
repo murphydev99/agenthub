@@ -5,8 +5,8 @@ import { useChatbotWorkflowStore } from '../../store/chatbotWorkflowStore';
 import { useVariableStore, VariableType } from '../../store/variableStore';
 import { OpenAIService } from '../../services/openai';
 
-// Use the same API URL as the rest of the app (can be configured for Azure)
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+// Use Azure API URL for deployment
+const API_URL = 'https://workflowcanvasapi.azurewebsites.net/api';
 const API_KEY = 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa';
 
 interface Message {
@@ -23,6 +23,7 @@ interface ChatWidgetProps {
   workflowId?: string;
   workflowAlias?: string;
   apiKey?: string;
+  domainToken?: string; // Domain-restricted token for embedded use
   position?: 'bottom-right' | 'bottom-left';
   primaryColor?: string;
   title?: string;
@@ -35,6 +36,7 @@ export function ChatWidget({
   workflowId,
   workflowAlias,
   apiKey,
+  domainToken,
   position = 'bottom-right',
   primaryColor = '#6366f1',
   title = 'AgentHub Assistant',
@@ -56,6 +58,8 @@ export function ChatWidget({
   const [displayedStepIds, setDisplayedStepIds] = useState<Set<string>>(new Set());
   const [isTyping, setIsTyping] = useState(false);
   const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
+  const [dataLoaded, setDataLoaded] = useState(false); // Track if initial data is loaded
+  const [initialLoadError, setInitialLoadError] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -105,18 +109,22 @@ export function ChatWidget({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load workflow when opened or fetch aliases for auto-detection
+  // Preload aliases immediately on mount for auto-detection mode
   useEffect(() => {
-    if (isOpen && !workflowStarted) {
+    if (autoDetectWorkflow && allAliases.length === 0 && !dataLoaded) {
+      fetchAliases();
+    }
+  }, [autoDetectWorkflow]);
+
+  // Load workflow when opened
+  useEffect(() => {
+    if (isOpen && !workflowStarted && dataLoaded) {
       if (workflowId || workflowAlias) {
         // Direct workflow specified - load it
         initializeWorkflow();
-      } else if (autoDetectWorkflow && allAliases.length === 0) {
-        // Auto-detect mode - fetch all aliases
-        fetchAliases();
       }
     }
-  }, [workflowId, workflowAlias, isOpen, autoDetectWorkflow]);
+  }, [workflowId, workflowAlias, isOpen, dataLoaded]);
 
   // Monitor workflow steps and display them
   useEffect(() => {
@@ -172,23 +180,63 @@ export function ChatWidget({
     }
   }, [rows, displayedStepIds, messages]);
 
+  // Helper function to get API headers with domain token if provided
+  const getApiHeaders = () => {
+    const headers: any = {
+      'x-api-key': apiKey || API_KEY
+    };
+    
+    // Add domain token if provided (for embedded use)
+    if (domainToken) {
+      headers['x-domain-token'] = domainToken;
+    }
+    
+    return headers;
+  };
+
   const fetchAliases = async () => {
     try {
-      const response = await fetch(`${API_URL}/aliases`, {
-        headers: {
-          'x-api-key': API_KEY
+      // Check if we have cached aliases in sessionStorage
+      const cachedAliases = sessionStorage.getItem('chatbot_aliases');
+      const cacheTimestamp = sessionStorage.getItem('chatbot_aliases_timestamp');
+      const cacheMaxAge = 5 * 60 * 1000; // 5 minutes cache
+      
+      if (cachedAliases && cacheTimestamp) {
+        const age = Date.now() - parseInt(cacheTimestamp);
+        if (age < cacheMaxAge) {
+          const aliases = JSON.parse(cachedAliases);
+          setAllAliases(aliases);
+          setDataLoaded(true);
+          console.log(`Using cached aliases: ${aliases.length} workflows`);
+          return;
         }
+      }
+      
+      // Use chatbot-specific endpoint if domain token is provided
+      const endpoint = domainToken ? `${API_URL}/chatbot/aliases` : `${API_URL}/aliases`;
+      const response = await fetch(endpoint, {
+        headers: getApiHeaders()
       });
       
       if (response.ok) {
         const aliases = await response.json();
         // Filter out aliases without workflow names
         const validAliases = aliases.filter((a: any) => a.WorkflowName && a.WorkflowName !== null);
+        
+        // Cache the aliases
+        sessionStorage.setItem('chatbot_aliases', JSON.stringify(validAliases));
+        sessionStorage.setItem('chatbot_aliases_timestamp', Date.now().toString());
+        
         setAllAliases(validAliases);
+        setDataLoaded(true);
         console.log(`Loaded ${validAliases.length} valid workflow aliases (filtered from ${aliases.length} total)`);
+      } else {
+        throw new Error('Failed to fetch aliases');
       }
     } catch (error) {
       console.error('Failed to fetch aliases:', error);
+      setInitialLoadError('Failed to load chatbot data. Please refresh the page.');
+      setDataLoaded(true); // Mark as loaded even on error to prevent infinite loading
     }
   };
   
@@ -320,14 +368,25 @@ IMPORTANT CONTEXT:
       
       console.log('Searching for workflow by name:', matchedAlias.WorkflowName);
       
-      // Use the search endpoint to find workflow by exact name
-      const searchResponse = await fetch(`${API_URL}/workflows/search?query=${encodeURIComponent(matchedAlias.WorkflowName)}`, {
-        headers: {
-          'x-api-key': API_KEY
-        }
+      // Use chatbot-specific search endpoint if domain token is provided
+      const searchEndpoint = domainToken 
+        ? `${API_URL}/chatbot/workflows/search?query=${encodeURIComponent(matchedAlias.WorkflowName)}`
+        : `${API_URL}/workflows/search?query=${encodeURIComponent(matchedAlias.WorkflowName)}`;
+      
+      const searchResponse = await fetch(searchEndpoint, {
+        headers: getApiHeaders()
       });
       
       if (!searchResponse.ok) {
+        if (searchResponse.status === 401 || searchResponse.status === 403) {
+          setMessages(prev => [...prev, {
+            id: `error-${Date.now()}`,
+            role: 'system',
+            content: '🔒 Authorization Error: The chatbot token is invalid or expired. Please check your configuration or contact support for a new token.',
+            timestamp: new Date()
+          }]);
+          throw new Error('Authorization failed');
+        }
         throw new Error('Failed to search workflows');
       }
       
@@ -345,14 +404,26 @@ IMPORTANT CONTEXT:
         throw new Error(`Workflow "${matchedAlias.WorkflowName}" not found`);
       }
       
-      // Load the workflow
-      const response = await fetch(`${API_URL}/workflows/${matchedWorkflow.WorkflowUID}`, {
-        headers: {
-          'x-api-key': API_KEY
-        }
+      // Use chatbot-specific endpoint if domain token is provided
+      const workflowEndpoint = domainToken 
+        ? `${API_URL}/chatbot/workflows/${matchedWorkflow.WorkflowUID}`
+        : `${API_URL}/workflows/${matchedWorkflow.WorkflowUID}`;
+      
+      const response = await fetch(workflowEndpoint, {
+        headers: getApiHeaders()
       });
       
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          // Show authorization error in chat
+          setMessages(prev => [...prev, {
+            id: `error-${Date.now()}`,
+            role: 'system',
+            content: '🔒 Authorization Error: The chatbot token is invalid or expired. Please check your configuration or contact support for a new token.',
+            timestamp: new Date()
+          }]);
+          throw new Error('Authorization failed');
+        }
         throw new Error('Failed to fetch workflow');
       }
       
@@ -410,13 +481,22 @@ IMPORTANT CONTEXT:
       
       if (workflowAlias) {
         // First, fetch aliases to find the workflow name
-        const aliasResponse = await fetch(`${API_URL}/aliases`, {
-          headers: {
-            'x-api-key': API_KEY
-          }
+        // Use chatbot-specific endpoint if domain token is provided
+        const aliasEndpoint = domainToken ? `${API_URL}/chatbot/aliases` : `${API_URL}/aliases`;
+        const aliasResponse = await fetch(aliasEndpoint, {
+          headers: getApiHeaders()
         });
         
         if (!aliasResponse.ok) {
+          if (aliasResponse.status === 401 || aliasResponse.status === 403) {
+            setMessages(prev => [...prev, {
+              id: `error-${Date.now()}`,
+              role: 'system',
+              content: '🔒 Authorization Error: The chatbot token is invalid, expired, or not authorized for this domain. Please check your configuration.',
+              timestamp: new Date()
+            }]);
+            throw new Error('Authorization failed');
+          }
           throw new Error('Failed to fetch aliases');
         }
         
@@ -430,13 +510,22 @@ IMPORTANT CONTEXT:
         }
         
         // Now fetch all workflows and find the one with matching name
-        const workflowsResponse = await fetch(`${API_URL}/workflows`, {
-          headers: {
-            'x-api-key': API_KEY
-          }
+        // Use chatbot-specific endpoint if domain token is provided
+        const workflowsEndpoint = domainToken ? `${API_URL}/chatbot/workflows` : `${API_URL}/workflows`;
+        const workflowsResponse = await fetch(workflowsEndpoint, {
+          headers: getApiHeaders()
         });
         
         if (!workflowsResponse.ok) {
+          if (workflowsResponse.status === 401 || workflowsResponse.status === 403) {
+            setMessages(prev => [...prev, {
+              id: `error-${Date.now()}`,
+              role: 'system',
+              content: '🔒 Authorization Error: The chatbot token is invalid, expired, or not authorized for this domain. Please check your configuration.',
+              timestamp: new Date()
+            }]);
+            throw new Error('Authorization failed');
+          }
           throw new Error('Failed to fetch workflows');
         }
         
@@ -450,26 +539,48 @@ IMPORTANT CONTEXT:
         }
         
         // Now fetch the full workflow data using the ID
-        const response = await fetch(`http://localhost:4000/api/workflows/${matchedWorkflow.WorkflowUID}`, {
-          headers: {
-            'x-api-key': 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa'
-          }
+        // Use chatbot-specific endpoint if domain token is provided
+        const workflowDetailEndpoint = domainToken
+          ? `${API_URL}/chatbot/workflows/${matchedWorkflow.WorkflowUID}`
+          : `${API_URL}/workflows/${matchedWorkflow.WorkflowUID}`;
+        const response = await fetch(workflowDetailEndpoint, {
+          headers: getApiHeaders()
         });
         
         if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            setMessages(prev => [...prev, {
+              id: `error-${Date.now()}`,
+              role: 'system',
+              content: '🔒 Authorization Error: The chatbot token is invalid, expired, or not authorized for this domain. Please check your configuration.',
+              timestamp: new Date()
+            }]);
+            throw new Error('Authorization failed');
+          }
           throw new Error('Failed to fetch workflow');
         }
         
         workflowData = await response.json();
       } else {
         // Fetch the workflow directly by ID
-        const response = await fetch(`${API_URL}/workflows/${workflowId}`, {
-          headers: {
-            'x-api-key': API_KEY
-          }
+        // Use chatbot-specific endpoint if domain token is provided
+        const workflowEndpoint = domainToken
+          ? `${API_URL}/chatbot/workflows/${workflowId}`
+          : `${API_URL}/workflows/${workflowId}`;
+        const response = await fetch(workflowEndpoint, {
+          headers: getApiHeaders()
         });
         
         if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            setMessages(prev => [...prev, {
+              id: `error-${Date.now()}`,
+              role: 'system',
+              content: '🔒 Authorization Error: The chatbot token is invalid, expired, or not authorized for this domain. Please check your configuration.',
+              timestamp: new Date()
+            }]);
+            throw new Error('Authorization failed');
+          }
           throw new Error('Failed to fetch workflow');
         }
         
@@ -1137,8 +1248,14 @@ Return ONLY the extracted value or "INVALID_RESPONSE", nothing else.`;
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={workflowStarted ? 'Type your response...' : 'What do you need help with?'}
-                disabled={isLoading}
+                placeholder={
+                  !dataLoaded && autoDetectWorkflow 
+                    ? 'Loading...' 
+                    : workflowStarted 
+                      ? 'Type your response...' 
+                      : 'What do you need help with?'
+                }
+                disabled={isLoading || (!dataLoaded && autoDetectWorkflow)}
                 className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <button

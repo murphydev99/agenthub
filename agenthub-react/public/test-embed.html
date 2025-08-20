@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Chatbot Embed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+        .info-box {
+            background: #f0f4f8;
+            border-left: 4px solid #4299e1;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #2b6cb0;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AgentHub Chatbot Embed Test Page</h1>
+        
+        <div class="info-box">
+            <h3>✅ Chatbot Widget Active</h3>
+            <p>The chatbot widget is embedded on this page using a domain-restricted token.</p>
+            <p>Token: <code>91b7f6f8...</code> (truncated for security)</p>
+            <p>Domain: <code>localhost:5174</code></p>
+        </div>
+
+        <h2>How It Works</h2>
+        <p>
+            This page demonstrates the AgentHub chatbot embedded using a secure, domain-restricted token.
+            The token is tied to <strong>localhost:5174</strong> and will only work when loaded from this domain.
+        </p>
+
+        <h2>Security Features</h2>
+        <ul>
+            <li><strong>Domain Validation:</strong> The API validates that requests come from the authorized domain</li>
+            <li><strong>Token Expiration:</strong> Tokens can be set to expire after a certain period</li>
+            <li><strong>Origin Checking:</strong> Cross-origin requests from unauthorized domains are blocked</li>
+            <li><strong>Subdomain Support:</strong> Tokens work for subdomains of the authorized domain</li>
+        </ul>
+
+        <h2>Try It Out!</h2>
+        <p>
+            Look for the chat icon in the bottom-right corner of this page. Click it to start a conversation!
+            The chatbot will:
+        </p>
+        <ul>
+            <li>Automatically detect what you need help with</li>
+            <li>Load the appropriate workflow</li>
+            <li>Guide you through the process</li>
+            <li>Collect necessary information</li>
+        </ul>
+
+        <div class="info-box">
+            <h3>💡 Tip</h3>
+            <p>Try asking about things like "food stamps", "SNAP eligibility", "MRI costs", or any other topic you have workflows for!</p>
+        </div>
+    </div>
+
+    <!-- AgentHub Chatbot Widget -->
+    <script>
+      (function() {
+        // Simple configuration - token is handled automatically based on domain
+        window.agentHubConfig = {
+          position: 'bottom-right',
+          primaryColor: '#3B82F6'
+          // title: 'Custom Title',  // Optional
+          // welcomeMessage: 'Custom Welcome!'  // Optional
+        };
+        const script = document.createElement('script');
+        script.src = '/chatbot-widget.js';  // Uses relative path, works on any domain
+        script.async = true;
+        document.head.appendChild(script);
+      })();
+    </script>
+</body>
+</html>

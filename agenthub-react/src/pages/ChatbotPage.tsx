@@ -1,8 +1,10 @@
 import { ChatWidget } from '../components/chatbot/ChatWidget';
 import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 export function ChatbotPage() {
   const [searchParams] = useSearchParams();
+  const [parentConfig, setParentConfig] = useState<any>(null);
   
   // Get configuration from URL parameters
   const workflowId = searchParams.get('workflowId') || undefined;
@@ -14,17 +16,39 @@ export function ChatbotPage() {
   const isEmbedded = searchParams.get('embedded') === 'true';
   const autoDetectWorkflow = searchParams.get('autoDetect') === 'true' || (!workflowId && !workflowAlias);
 
-  // If embedded, only show the widget with transparent background
-  if (isEmbedded) {
+  // Listen for configuration from parent window
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'AGENTHUB_CONFIG') {
+        setParentConfig(event.data.config);
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    
+    // Check if we're in an iframe
+    if (window.parent !== window) {
+      // We're embedded
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.body.style.background = 'transparent';
+    }
+    
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // If embedded or received parent config, show widget directly
+  if (isEmbedded || parentConfig || window.parent !== window) {
     return (
       <div style={{ background: 'transparent', minHeight: '100vh' }}>
         <ChatWidget
           workflowId={workflowId}
           workflowAlias={workflowAlias}
-          position={position}
-          primaryColor={primaryColor}
-          title={title}
-          welcomeMessage={welcomeMessage}
+          domainToken={parentConfig?.token}
+          position={parentConfig?.position || position}
+          primaryColor={parentConfig?.primaryColor || primaryColor}
+          title={parentConfig?.title || title}
+          welcomeMessage={parentConfig?.welcomeMessage || welcomeMessage}
           apiKey={import.meta.env.VITE_OPENAI_API_KEY}
           autoDetectWorkflow={autoDetectWorkflow}
         />
@@ -177,6 +201,7 @@ export function ChatbotPage() {
       <ChatWidget
         workflowId={workflowId}
         workflowAlias={workflowAlias}
+        domainToken="8716430d54c4cdc020842713c396450e9080c6252db1a1a84938b0f583da82d0"
         position={position}
         primaryColor={primaryColor}
         title={title}
