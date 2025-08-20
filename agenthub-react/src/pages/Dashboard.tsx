@@ -192,12 +192,12 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-6xl mx-auto">
         {/* Animated Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-start">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
             <div>
-              <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 AgentHub Dashboard
               </h2>
               <p className="text-gray-600 mt-2 flex items-center gap-2">
@@ -207,24 +207,24 @@ export function Dashboard() {
             </div>
           
             {/* Interaction Mode Toggle */}
-            <Card className={`relative overflow-hidden transition-all duration-300 ${
+            <Card className={`relative overflow-hidden transition-all duration-300 w-full lg:w-auto ${
               interactionMode 
-                ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-2xl scale-105' 
+                ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-2xl lg:scale-105' 
                 : 'bg-white hover:shadow-xl'
             }`}>
               <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
-              <div className="relative p-5">
+              <div className="relative p-4 sm:p-5">
                 <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${interactionMode ? 'bg-white/20' : 'bg-gray-100'}`}>
-                    <Shield className={`h-6 w-6 ${interactionMode ? 'text-white' : 'text-gray-600'}`} />
+                  <div className={`p-2 rounded-lg hidden sm:block ${interactionMode ? 'bg-white/20' : 'bg-gray-100'}`}>
+                    <Shield className={`h-5 w-5 sm:h-6 sm:w-6 ${interactionMode ? 'text-white' : 'text-gray-600'}`} />
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className={`text-xs uppercase tracking-wider ${interactionMode ? 'text-white/80' : 'text-gray-500'}`}>
                           Interaction Mode
                         </p>
-                        <p className={`text-2xl font-bold ${interactionMode ? 'text-white' : 'text-gray-900'}`}>
+                        <p className={`text-lg sm:text-xl lg:text-2xl font-bold ${interactionMode ? 'text-white' : 'text-gray-900'}`}>
                           {interactionMode ? 'ACTIVE' : 'INACTIVE'}
                         </p>
                       </div>
@@ -233,14 +233,14 @@ export function Dashboard() {
                         role="switch"
                         aria-checked={interactionMode}
                         onClick={() => setInteractionMode(!interactionMode)}
-                        className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ${
+                        className={`relative inline-flex h-7 w-12 sm:h-8 sm:w-14 items-center rounded-full transition-all duration-300 flex-shrink-0 ${
                           interactionMode ? 'bg-white/30' : 'bg-gray-200'
                         }`}
                       >
                         <span
-                          className={`inline-block h-6 w-6 transform rounded-full transition-all duration-300 ${
+                          className={`inline-block h-5 w-5 sm:h-6 sm:w-6 transform rounded-full transition-all duration-300 ${
                             interactionMode 
-                              ? 'translate-x-7 bg-white shadow-lg' 
+                              ? 'translate-x-6 sm:translate-x-7 bg-white shadow-lg' 
                               : 'translate-x-1 bg-white shadow'
                           }`}
                         />
@@ -259,7 +259,7 @@ export function Dashboard() {
                               Session Active
                             </p>
                           </div>
-                          <p className="text-xs font-mono bg-white/20 px-2 py-1 rounded">
+                          <p className="text-xs font-mono bg-white/20 px-2 py-1 rounded hidden sm:block">
                             {currentInteractionGUID.slice(0, 8)}
                           </p>
                         </div>

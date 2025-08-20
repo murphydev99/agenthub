@@ -132,21 +132,27 @@ export function Question({ row }: QuestionProps) {
     return null; // Don't show the question at all
   }
   
-  // Determine button layout based on total text length
+  // Determine button layout based on total text length and screen size
   const totalTextLength = visibleAnswers.reduce((sum: number, a: any) => sum + a.text.length, 0);
   const averageLength = totalTextLength / visibleAnswers.length;
   const maxLength = Math.max(...visibleAnswers.map((a: any) => a.text.length));
+  
+  // Check if we're on a mobile device (simple check based on window width)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
   
   // Use horizontal layout if:
   // - 5 or fewer answers with max length < 20 chars (like satisfaction scale), OR
   // - 3 or fewer answers regardless of text length, OR
   // - 4 answers with average < 25 chars, OR
   // - All answers are short (< 15 chars each)
+  // BUT force vertical on mobile if any answer is longer than 15 chars
   const buttonLayout = 
-    (visibleAnswers.length <= 5 && maxLength < 20) ||
-    visibleAnswers.length <= 3 ||
-    (visibleAnswers.length <= 4 && averageLength < 25) ||
-    visibleAnswers.every((a: any) => a.text.length < 15)
+    !isMobile && (
+      (visibleAnswers.length <= 5 && maxLength < 20) ||
+      visibleAnswers.length <= 3 ||
+      (visibleAnswers.length <= 4 && averageLength < 25) ||
+      visibleAnswers.every((a: any) => a.text.length < 15)
+    ) && maxLength < 30  // Force vertical if any answer is very long
       ? 'horizontal' 
       : 'vertical';
   
@@ -160,7 +166,7 @@ export function Question({ row }: QuestionProps) {
       
       <div className={cn(
         "gap-2",
-        buttonLayout === 'horizontal' ? 'flex flex-row flex-wrap' : 'flex flex-col'
+        buttonLayout === 'horizontal' ? 'flex flex-row flex-wrap' : 'flex flex-col w-full'
       )}>
         {visibleAnswers.map((answer: any, index: number) => {
           const isSelected = selectedAnswerGUID === answer.GUID;
@@ -210,8 +216,10 @@ export function Question({ row }: QuestionProps) {
               disabled={false}
               variant="ghost"
               className={cn(
-                buttonLayout === 'horizontal' ? 'flex-1 min-w-[100px]' : 'w-full',
-                'font-medium py-2 px-4',
+                buttonLayout === 'horizontal' 
+                  ? 'flex-1 min-w-0 sm:min-w-[100px] max-w-full' 
+                  : 'w-full',
+                'font-medium py-2 px-3 sm:px-4 text-sm sm:text-base break-words',
                 getButtonStyle(),
                 answered && !isSelected && 'opacity-70'
               )}

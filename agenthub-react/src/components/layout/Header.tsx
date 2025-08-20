@@ -6,10 +6,9 @@ export function Header() {
   const { user, logout } = useAuthStore();
 
   return (
-    <header className="h-16 border-b bg-card px-6 flex items-center justify-between">
-      <div className="flex items-center space-x-4">
-        <h1 className="text-xl font-bold">AgentHub</h1>
-        <span className="text-sm text-muted-foreground">Workflow Execution System</span>
+    <header className="h-16 border-b bg-card px-4 sm:px-6 flex items-center justify-between">
+      <div className="flex items-center space-x-2 sm:space-x-4">
+        <h1 className="text-lg sm:text-xl font-bold">AgentHub</h1>
       </div>
       
       <div className="flex items-center space-x-4">

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Minimize2, Send, Bot, User } from 'lucide-react';
+import { MessageCircle, X, Minimize2, Send, Bot, User, RefreshCw } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useChatbotWorkflowStore } from '../../store/chatbotWorkflowStore';
 import { useVariableStore, VariableType } from '../../store/variableStore';
@@ -950,8 +950,40 @@ Return ONLY the extracted value or "INVALID_RESPONSE", nothing else.`;
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => {
+              // Reset conversation without closing
+              setMessages([]);
+              setInputValue('');
+              setCurrentStep(null);
+              setWorkflowStarted(false);
+              setDisplayedStepIds(new Set());
+              processingStepRef.current = null;
+              setPendingWorkflowChoices([]);
+              setIsTyping(false);
+              setSelectedAnswerId(null);
+              
+              // Clear workflow by loading an empty workflow
+              loadWorkflow({ WorkflowName: '', Steps: [] });
+              
+              // Re-add welcome message if auto-detect is enabled
+              if (autoDetectWorkflow) {
+                setMessages([{
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: welcomeMessage,
+                  timestamp: new Date()
+                }]);
+              }
+            }}
+            className="p-1 rounded hover:bg-white/20 transition-colors"
+            title="Restart conversation"
+          >
+            <RefreshCw className="h-4 w-4 text-white" />
+          </button>
+          <button
             onClick={() => setIsMinimized(!isMinimized)}
             className="p-1 rounded hover:bg-white/20 transition-colors"
+            title="Minimize"
           >
             <Minimize2 className="h-4 w-4 text-white" />
           </button>
@@ -976,6 +1008,7 @@ Return ONLY the extracted value or "INVALID_RESPONSE", nothing else.`;
               // Will re-initialize with welcome message when reopened
             }}
             className="p-1 rounded hover:bg-white/20 transition-colors"
+            title="Close"
           >
             <X className="h-4 w-4 text-white" />
           </button>
