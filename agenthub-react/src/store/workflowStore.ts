@@ -303,7 +303,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
         import('./variableStore').then(({ useVariableStore, VariableType }) => {
           const variableState = useVariableStore.getState();
           
-          step.VariableAssignments.forEach((assignment: any) => {
+          step.VariableAssignments?.forEach((assignment: any) => {
             if (assignment.VariableName && assignment.VariableValue !== undefined) {
               console.log(`Setting variable from VariableAssignment: ${assignment.VariableName} = ${assignment.VariableValue}`);
               variableState.setVariable(
@@ -329,14 +329,14 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       // Check if we should clear the window (case-insensitive)
       const shouldClearWindow = 
         step.ClearWindow === true || 
-        (typeof step.ClearWindow === 'string' && step.ClearWindow.toLowerCase() === 'true');
+        (typeof step.ClearWindow === 'string' && (step.ClearWindow as string).toLowerCase() === 'true');
       console.log('ClearWindow:', step.ClearWindow, 'shouldClearWindow:', shouldClearWindow);
       
       // Load the sub-workflow asynchronously
       if (step.WorkflowName) {
         // Import the workflow service
         import('../services/api/workflows').then(({ workflowService }) => {
-          workflowService.getWorkflowByName(step.WorkflowName)
+          workflowService.getWorkflowByName(step.WorkflowName!)
             .then(subWorkflow => {
               console.log('Successfully loaded sub-workflow:', subWorkflow.WorkflowName);
               
