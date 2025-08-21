@@ -596,7 +596,7 @@ The numbers should be ordered by relevance with the best match first`;
       setMessages(prev => [...prev, {
         id: welcomeId,
         role: 'assistant',
-        content: `Great! I'll help you with ${workflow.WorkflowName}. Let me guide you through the process.`,
+        content: `I'll help you with ${workflow.WorkflowName}. Let me guide you through the process.`,
         timestamp: new Date()
       }]);
       
@@ -937,13 +937,7 @@ The numbers should be ordered by relevance with the best match first`;
       } else if (autoDetectWorkflow) {
         // Try to find matching workflows
         setSearchingWorkflow(true);
-        
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: 'Let me find the right workflow to help you with that...',
-          timestamp: new Date()
-        }]);
+        setIsLoading(true); // Show typing indicator while searching
         
         const matchedAliases = await searchForWorkflow(inputValue.trim());
         
@@ -985,6 +979,7 @@ The numbers should be ordered by relevance with the best match first`;
         }
         
         setSearchingWorkflow(false);
+        setIsLoading(false); // Turn off loading indicator
       }
     }
   };
