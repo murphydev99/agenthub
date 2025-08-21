@@ -286,7 +286,7 @@ export function ChatWidget({
         const meaningfulInputWords = inputWords.filter(w => !commonWords.has(w));
         
         // Count how many meaningful words match
-        let matchedWords = new Set();
+        let matchedWords = new Set<string>();
         for (const word of meaningfulInputWords) {
           if (combined.includes(word)) {
             matchedWords.add(word);
@@ -357,7 +357,7 @@ export function ChatWidget({
       
       let workflowList = '';
       let currentIndex = 1;
-      const indexedAliases = [];
+      const indexedAliases: any[] = [];
       
       if (highScored.length > 0) {
         workflowList += 'LIKELY MATCHES (high keyword score):\n';
