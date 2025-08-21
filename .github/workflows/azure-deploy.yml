@@ -38,6 +38,8 @@ jobs:
       env:
         VITE_API_URL: https://workflowcanvasapi.azurewebsites.net/api
         VITE_APP_ENV: production
+        VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
+        VITE_OPENAI_MODEL: gpt-4o-mini
 
     - name: Create deployment package
       run: |
