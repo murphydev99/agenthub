@@ -4,10 +4,11 @@ import { cn } from '../../lib/utils';
 import { useChatbotWorkflowStore } from '../../store/chatbotWorkflowStore';
 import { useVariableStore, VariableType } from '../../store/variableStore';
 import { OpenAIService } from '../../services/openai';
+import { vectorStore } from '../../services/vectorStore';
 
-// Use Azure API URL for deployment
-const API_URL = 'https://workflowcanvasapi.azurewebsites.net/api';
-const API_KEY = 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa';
+// Use environment variables for API configuration
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_KEY = import.meta.env.VITE_API_KEY || 'e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa';
 
 interface Message {
   id: string;
@@ -183,14 +184,16 @@ export function ChatWidget({
   // Helper function to get API headers with domain token if provided
   const getApiHeaders = () => {
     const headers: any = {
-      'x-api-key': apiKey || API_KEY
+      'x-api-key': API_KEY,  // Always use the API_KEY for authentication
+      'Content-Type': 'application/json'
     };
     
-    // Add domain token if provided (for embedded use)
+    // Add domain token if provided (for embedded use with chatbot endpoints)
     if (domainToken) {
       headers['x-domain-token'] = domainToken;
     }
     
+    console.log('Request headers:', headers);  // Debug logging
     return headers;
   };
 
@@ -208,6 +211,13 @@ export function ChatWidget({
           setAllAliases(aliases);
           setDataLoaded(true);
           console.log(`Using cached aliases: ${aliases.length} workflows`);
+          
+          // Initialize vector store with cached aliases
+          if (import.meta.env.VITE_OPENAI_API_KEY) {
+            vectorStore.initialize(aliases, import.meta.env.VITE_OPENAI_API_KEY)
+              .then(() => console.log('Vector store initialized with cached data'))
+              .catch(err => console.error('Failed to initialize vector store:', err));
+          }
           return;
         }
       }
@@ -230,6 +240,13 @@ export function ChatWidget({
         setAllAliases(validAliases);
         setDataLoaded(true);
         console.log(`Loaded ${validAliases.length} valid workflow aliases (filtered from ${aliases.length} total)`);
+        
+        // Initialize vector store with aliases
+        if (import.meta.env.VITE_OPENAI_API_KEY) {
+          vectorStore.initialize(validAliases, import.meta.env.VITE_OPENAI_API_KEY)
+            .then(() => console.log('Vector store initialized'))
+            .catch(err => console.error('Failed to initialize vector store:', err));
+        }
       } else {
         throw new Error('Failed to fetch aliases');
       }
@@ -244,49 +261,177 @@ export function ChatWidget({
     if (!allAliases || allAliases.length === 0) return [];
     
     try {
-      // Prepare the list of available workflows for the LLM
-      const workflowList = allAliases.map((alias, index) => 
-        `${index + 1}. "${alias.AliasText}" - ${alias.WorkflowName}`
-      ).join('\n');
+      // Filter to only valid workflows first
+      const validAliases = allAliases.filter(a => a.WorkflowName && a.WorkflowName !== 'null');
+      console.log(`Searching among ${validAliases.length} valid workflows for: "${userInput}"`);
       
-      const systemPrompt = `You are a workflow matcher. Given a user's request and a list of available workflows with their aliases, identify which workflows might match their intent.
+      // Extract key terms from user input
+      const lowerInput = userInput.toLowerCase();
+      const inputWords = lowerInput.split(/\s+/).filter(w => w.length > 2);
+      
+      // Score each workflow based on relevance
+      const scoredAliases = validAliases.map(alias => {
+        const aliasLower = (alias.AliasText || '').toLowerCase();
+        const workflowLower = (alias.WorkflowName || '').toLowerCase();
+        const combined = aliasLower + ' ' + workflowLower;
+        let score = 0;
+        
+        // Exact alias match gets highest score
+        if (aliasLower === lowerInput) {
+          score += 1000;
+        }
+        
+        // Extract meaningful words (not common words)
+        const commonWords = new Set(['the', 'a', 'an', 'how', 'what', 'does', 'much', 'help', 'with', 'need', 'get', 'can', 'i', 'my', 'for', 'is']);
+        const meaningfulInputWords = inputWords.filter(w => !commonWords.has(w));
+        
+        // Count how many meaningful words match
+        let matchedWords = new Set();
+        for (const word of meaningfulInputWords) {
+          if (combined.includes(word)) {
+            matchedWords.add(word);
+          }
+        }
+        
+        // Calculate match percentage
+        const matchPercentage = meaningfulInputWords.length > 0 
+          ? matchedWords.size / meaningfulInputWords.length 
+          : 0;
+        
+        // Base score on match percentage
+        score += matchPercentage * 100;
+        
+        // Extra points for each matched word (longer = more specific)
+        matchedWords.forEach(word => {
+          // More points if word appears in alias vs just workflow name
+          if (aliasLower.includes(word)) {
+            score += word.length * 5;
+          } else if (workflowLower.includes(word)) {
+            score += word.length * 2;
+          }
+        });
+        
+        // Check for bigram/phrase matches (two words together)
+        for (let i = 0; i < meaningfulInputWords.length - 1; i++) {
+          const bigram = meaningfulInputWords[i] + ' ' + meaningfulInputWords[i + 1];
+          if (combined.includes(bigram)) {
+            score += 50; // Matching phrases is very important
+          }
+        }
+        
+        // Penalize partial matches that might be misleading
+        // e.g., "cost" matching "Cost Estimation" when looking for "MRI cost"
+        if (matchedWords.size === 1 && meaningfulInputWords.length >= 2) {
+          score = score * 0.5;
+        }
+        
+        return { ...alias, score };
+      });
+      
+      // Sort by score and get top matches
+      scoredAliases.sort((a, b) => b.score - a.score);
+      
+      // Always use LLM for final decision, but provide scoring hints
+      console.log(`Scored ${scoredAliases.filter(a => a.score > 0).length} workflows, sending to LLM for final selection`);
+      
+      // Prepare workflow list with scoring hints for the LLM
+      // Include ALL workflows but organize by score
+      const highScored = scoredAliases.filter(a => a.score >= 50).slice(0, 15);
+      const mediumScored = scoredAliases.filter(a => a.score > 0 && a.score < 50).slice(0, 15);
+      const zeroScored = scoredAliases.filter(a => a.score === 0);
+      
+      // For zero-scored items, prioritize those with relevant keywords
+      const relevantKeywords = ['snap', 'food', 'stamp', 'ebt', 'nutrition', 'mri', 'irish', 'passport', 'customer', 'service'];
+      const possiblyRelevant = [];
+      const others = [];
+      
+      for (const alias of zeroScored) {
+        const aliasLower = (alias.AliasText || '').toLowerCase();
+        const hasRelevantKeyword = relevantKeywords.some(keyword => aliasLower.includes(keyword));
+        if (hasRelevantKeyword) {
+          possiblyRelevant.push(alias);
+        } else {
+          others.push(alias);
+        }
+      }
+      
+      let workflowList = '';
+      let currentIndex = 1;
+      const indexedAliases = [];
+      
+      if (highScored.length > 0) {
+        workflowList += 'LIKELY MATCHES (high keyword score):\n';
+        highScored.forEach(alias => {
+          workflowList += `${currentIndex}. "${alias.AliasText}" - ${alias.WorkflowName}\n`;
+          indexedAliases.push(alias);
+          currentIndex++;
+        });
+      }
+      
+      if (mediumScored.length > 0) {
+        workflowList += '\nPOSSIBLE MATCHES (some keywords matched):\n';
+        mediumScored.forEach(alias => {
+          workflowList += `${currentIndex}. "${alias.AliasText}" - ${alias.WorkflowName}\n`;
+          indexedAliases.push(alias);
+          currentIndex++;
+        });
+      }
+      
+      // Always include possibly relevant zero-scored items
+      if (possiblyRelevant.length > 0) {
+        workflowList += '\nCHECK THESE (no keyword match but might be semantically relevant):\n';
+        possiblyRelevant.slice(0, 30).forEach(alias => {
+          workflowList += `${currentIndex}. "${alias.AliasText}" - ${alias.WorkflowName}\n`;
+          indexedAliases.push(alias);
+          currentIndex++;
+        });
+      }
+      
+      // Include a sample of other workflows
+      if (others.length > 0 && currentIndex < 50) {
+        workflowList += '\nOTHER WORKFLOWS:\n';
+        others.slice(0, Math.min(10, 50 - currentIndex)).forEach(alias => {
+          workflowList += `${currentIndex}. "${alias.AliasText}" - ${alias.WorkflowName}\n`;
+          indexedAliases.push(alias);
+          currentIndex++;
+        });
+      }
+      
+      const systemPrompt = `You are an intelligent workflow matcher. The user needs help finding the right workflow for their request.
 
-IMPORTANT: The ALIAS (first part in quotes) is what users typically type or ask about. Match primarily against the alias text, not just the workflow name.
+The workflows are organized in sections based on keyword matching scores:
+- LIKELY MATCHES: These workflows had strong keyword matches
+- POSSIBLE MATCHES: These had some keyword matches
+- OTHER AVAILABLE WORKFLOWS: These had no keyword matches but might still be semantically relevant
+
+IMPORTANT CONTEXT:
+- "SNAP" = Supplemental Nutrition Assistance Program = food stamps = EBT = food assistance
+- Consider semantic meaning, not just keywords
+- A workflow about "SNAP Eligibility" should match queries about "food stamps" even if those exact words don't appear
+- Similarly, "MRI Cost Estimation" should match "how much does an MRI cost"
+
+User's request: "${userInput}"
 
 Available workflows:
 ${workflowList}
 
-Return up to 3 best matching workflows as comma-separated numbers (e.g., "1,3,5"), or "none" if no workflows match.
-Order them by relevance, with the best match first.
+TASK:
+1. Review ALL sections, not just the likely matches
+2. Consider semantic meaning and user intent
+3. Check if any workflows in the "OTHER" section might actually be the best match
+4. Return the 1-3 most relevant workflow numbers
 
-Matching rules:
-1. First check if the user's request matches any ALIAS text (the part in quotes)
-2. Then check if it matches the workflow name
-3. Look for semantic matches, not just exact word matches
-4. Consider synonyms and related terms (price/cost/fee, how much/what's the price/cost of)
-
-Examples:
-- "I wonder if I can get an irish passport" → matches alias "irish passport"
-- "Seans Customer Service" or "customer service" → matches alias "Seans Customer Service"
-- "check snap eligibility" → matches alias "snap-eligibility"
-- "food stamps", "food assistance", "EBT", "SNAP benefits" → matches alias "snap-eligibility"
-- "am I eligible for food stamps" → matches alias "snap-eligibility" (semantic match)
-- "how much is an MRI", "MRI price", "cost of MRI scan" → matches alias "MRI Cost Estimation"
-- "what does an MRI cost", "MRI fees", "price for MRI" → matches alias "MRI Cost Estimation"
-- Any request about passports from Ireland → matches alias "irish passport"
-
-IMPORTANT CONTEXT:
-- "SNAP" stands for Supplemental Nutrition Assistance Program (formerly food stamps)
-- Match any queries about food assistance, food stamps, EBT, or nutritional aid to SNAP-related workflows
-- For pricing questions, match variations like "how much is", "what's the price", "cost of", "fees for", etc.
-- Be flexible with word order and phrasing - "how much is an MRI" = "MRI cost" = "price of MRI"`;
+OUTPUT:
+Return ONLY the numbers as comma-separated values (e.g., "1,3,5")
+Return "none" if no workflows match
+The numbers should be ordered by relevance with the best match first`;
 
       const response = await OpenAIService.chat({
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userInput }
         ],
-        temperature: 0.1, // Low temperature for more deterministic matching
+        // temperature: 1 is the default and only supported value for this model
         apiKey: import.meta.env.VITE_OPENAI_API_KEY
       });
       
@@ -301,10 +446,11 @@ IMPORTANT CONTEXT:
       const matches = [];
       const numbers = matchNumbers.split(',').map(n => n.trim());
       
+      // Note: We're now using indexedAliases which contains the exact items shown to the LLM
       for (const num of numbers) {
         const index = parseInt(num) - 1;
-        if (!isNaN(index) && index >= 0 && index < allAliases.length) {
-          matches.push(allAliases[index]);
+        if (!isNaN(index) && index >= 0 && index < indexedAliases.length) {
+          matches.push(indexedAliases[index]);
         }
       }
       
@@ -959,7 +1105,7 @@ Return ONLY the extracted value or "INVALID_RESPONSE", nothing else.`;
         messages: [
           { role: 'system', content: extractionPrompt }
         ],
-        temperature: 0.1,
+        // temperature: 1 is the default and only supported value  
         apiKey: import.meta.env.VITE_OPENAI_API_KEY
       });
       
@@ -1025,12 +1171,13 @@ Return ONLY the extracted value or "INVALID_RESPONSE", nothing else.`;
         onClick={() => setIsOpen(true)}
         className={cn(
           "fixed z-50 p-4 rounded-full shadow-lg",
-          "bg-gradient-to-r from-indigo-600 to-purple-600",
-          "hover:from-indigo-700 hover:to-purple-700",
           "transition-all hover:scale-110",
           positionClasses
         )}
-        style={{ backgroundColor: primaryColor }}
+        style={{ 
+          background: primaryColor || '#6366f1',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        }}
       >
         <MessageCircle className="h-6 w-6 text-white" />
       </button>
@@ -1040,20 +1187,24 @@ Return ONLY the extracted value or "INVALID_RESPONSE", nothing else.`;
   return (
     <div
       className={cn(
-        "fixed z-50 flex flex-col rounded-lg shadow-2xl transition-all",
-        isMinimized ? "bg-transparent" : "bg-white",
+        "fixed z-50 flex flex-col rounded-lg transition-all bg-white",
         "w-96",
         positionClasses,
         isMinimized ? "h-14" : "h-[600px]"
       )}
+      style={{
+        boxShadow: 'none'
+      }}
     >
       {/* Header */}
       <div 
         className={cn(
-          "flex items-center justify-between p-4 border-b rounded-lg",
-          isMinimized && "border-0"
+          "flex items-center justify-between px-4 py-6 border-b",
+          isMinimized ? "rounded-lg border-0 py-4" : "rounded-t-lg"
         )}
-        style={{ background: `linear-gradient(to right, ${primaryColor}, ${primaryColor}dd)` }}
+        style={{ 
+          background: primaryColor || '#6366f1'
+        }}
       >
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-white" />

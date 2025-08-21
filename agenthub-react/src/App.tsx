@@ -7,6 +7,7 @@ import { Dashboard } from './pages/Dashboard';
 import { WorkflowExecution } from './pages/WorkflowExecution';
 import { ChatbotPage } from './pages/ChatbotPage';
 import { TokenManagement } from './pages/TokenManagement';
+import { TestVectorSearchPage } from './pages/TestVectorSearch';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,6 +25,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/chatbot" element={<ChatbotPage />} />
+          <Route path="/test-vector" element={<TestVectorSearchPage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route path="/" element={<Dashboard />} />

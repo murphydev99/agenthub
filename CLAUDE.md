@@ -20,7 +20,45 @@ Migrating the legacy AgentHub workflow execution system from Angular to a modern
 - **API**: REST API at `/murphsea/workflow-canvas/api`
 - **Authentication**: Bearer token with hardcoded admin credentials
 - **Database**: Azure SQL (via API)
-- **AI**: OpenAI GPT-5 for workflow generation
+- **AI**: OpenAI models for workflow generation and search
+
+## OpenAI Models (API – August 2025)
+
+### Core Reasoning & Chat Models
+
+#### **o1 Series**
+- **Purpose**: First dedicated reasoning models with deep chain-of-thought
+- **Variants**: `o1-preview`, `o1-mini` (80% cheaper), `o1-pro` (most powerful)
+- **Strengths**: Exceptional STEM performance (AIME 83% vs GPT-4o's 13%), complex multi-step reasoning
+
+#### **o3 Series** 
+- **Purpose**: Successor to o1 with stronger private reasoning
+- **Variants**: `o3-mini` (Jan 2025), `o3-mini-high`, `o3` (Apr 2025), `o3-pro` (Jun 2025)
+- **Strengths**: Top-tier coding, math, scientific reasoning; outperforms o1 on Codeforces, GPQA Diamond
+
+#### **o4-mini**
+- **Purpose**: Compact reasoning model for math, code, visual tasks
+- **Capabilities**: Excels in math with Python interpreter, supports text + image input
+
+#### **GPT-5 Series** (Recommended for Workflow Search)
+- **Purpose**: Flagship general-purpose model family with dynamic routing
+- **Variants**: `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5-chat`
+- **Strengths**: 
+  - Unified model adapts reasoning depth dynamically
+  - Excels in coding, math, writing, health, vision
+  - Context window: ~400k tokens (272k input / 128k output)
+  - `gpt-5-chat`: text + image inputs
+
+### Multimodal & Specialty Models
+
+#### **GPT-4o ("omni")**
+- **Variants**: `gpt-4o`, `gpt-4o-mini`
+- **Strengths**: Native multimodal (text, image, audio), 128k context, natural responses
+
+### Model Selection Guide for AgentHub
+- **Workflow Search**: Use `gpt-5-mini` for best instruction-following and cost balance
+- **Complex Reasoning**: Use `o3-mini` or `o4-mini` for logical workflow matching
+- **Budget Option**: Use `gpt-4o-mini` for basic search functionality
 
 ## Architecture Design
 

@@ -25,8 +25,8 @@ export class OpenAIService {
     const {
       messages,
       apiKey,
-      model = 'gpt-4o-mini',
-      temperature = 0.7,
+      model = 'gpt-5-mini',
+      temperature = 1, // Use default value of 1
       maxTokens = 500
     } = options;
 
@@ -35,19 +35,25 @@ export class OpenAIService {
     }
 
     try {
+      const requestBody: any = {
+        model,
+        messages,
+        max_completion_tokens: maxTokens,
+        stream: false
+      };
+
+      // Only include temperature if it's not the default value
+      if (temperature !== 1) {
+        requestBody.temperature = temperature;
+      }
+
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature,
-          max_tokens: maxTokens,
-          stream: false
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -94,8 +100,7 @@ Return only valid JSON with the extracted values. If a value is not found, use n
         }
       ],
       apiKey,
-      model: 'gpt-4o-mini',
-      temperature: 0.3
+      model: 'gpt-5-mini'
     });
 
     try {
@@ -133,8 +138,7 @@ Return only the workflow ID that best matches, or "none" if no workflow matches.
         }
       ],
       apiKey,
-      model: 'gpt-4o-mini',
-      temperature: 0.3,
+      model: 'gpt-5-mini',
       maxTokens: 50
     });
 

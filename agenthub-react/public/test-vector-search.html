@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vector Search Test - AgentHub Chatbot</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .info {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .test-queries {
+      margin: 30px 0;
+    }
+    .test-queries h2 {
+      color: #555;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    .query-list {
+      list-style: none;
+      padding: 0;
+    }
+    .query-list li {
+      background: #f8f9fa;
+      padding: 10px 15px;
+      margin: 8px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .query-list li:hover {
+      background: #e9ecef;
+      transform: translateX(5px);
+    }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 14px;
+    }
+    .improvements {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .improvements h3 {
+      margin-top: 0;
+      color: #2e7d32;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 AgentHub Chatbot - Vector Search Testing</h1>
+    
+    <div class="info">
+      <strong>Model Updated:</strong> Now using <code>gpt-5-mini</code> for improved instruction-following and workflow matching.<br>
+      <strong>Search Method:</strong> Hybrid approach combining vector embeddings and keyword matching.
+    </div>
+
+    <div class="improvements">
+      <h3>✨ Improvements Implemented</h3>
+      <ul>
+        <li><strong>GPT-5-mini Model:</strong> Better at understanding user intent and following instructions</li>
+        <li><strong>Vector Store:</strong> Uses OpenAI's <code>text-embedding-3-small</code> for semantic search</li>
+        <li><strong>Hybrid Search:</strong> Combines vector similarity with keyword matching</li>
+        <li><strong>Synonym Expansion:</strong> Automatically includes related terms (e.g., "SNAP" → "food stamps", "EBT")</li>
+        <li><strong>Caching:</strong> 24-hour cache for embeddings to reduce API calls</li>
+      </ul>
+    </div>
+
+    <div class="test-queries">
+      <h2>Test Queries to Try:</h2>
+      <p style="color: #666; font-size: 14px;">Click on any query below to copy it, then paste it in the chatbot:</p>
+      <ul class="query-list">
+        <li onclick="copyToClipboard(this)">I wonder if I can get an irish passport</li>
+        <li onclick="copyToClipboard(this)">am I eligible for food stamps?</li>
+        <li onclick="copyToClipboard(this)">how much does an MRI cost?</li>
+        <li onclick="copyToClipboard(this)">what's the price of an MRI scan?</li>
+        <li onclick="copyToClipboard(this)">I need help with SNAP benefits</li>
+        <li onclick="copyToClipboard(this)">customer service</li>
+        <li onclick="copyToClipboard(this)">Seans Customer Service</li>
+        <li onclick="copyToClipboard(this)">check my eligibility for nutritional assistance</li>
+        <li onclick="copyToClipboard(this)">MRI pricing information</li>
+        <li onclick="copyToClipboard(this)">can I get EBT?</li>
+      </ul>
+    </div>
+
+    <div class="info" style="background: #fff3e0; border-color: #ff9800;">
+      <strong>Note:</strong> The chatbot widget will appear in the bottom-right corner. If it doesn't load, make sure your OpenAI API key is set in the <code>.env</code> file.
+    </div>
+  </div>
+
+  <!-- Include the chatbot widget -->
+  <script>
+    window.agentHubConfig = {
+      token: 'fa0203a5dcac18d6524422d35b46d25fb21da314ec925d47e8092984e8d22ff4',
+      position: 'bottom-right',
+      primaryColor: '#3B82F6',
+      autoDetectWorkflow: true,
+      title: 'AgentHub Assistant (Vector Search)',
+      welcomeMessage: 'Hi! I\'m using improved vector search to help you find the right workflow. What can I help you with today?'
+    };
+
+    function copyToClipboard(element) {
+      const text = element.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const original = element.innerHTML;
+        element.innerHTML = '✓ Copied! Now paste in the chatbot...';
+        element.style.background = '#d4edda';
+        setTimeout(() => {
+          element.innerHTML = original;
+          element.style.background = '';
+        }, 2000);
+      });
+    }
+  </script>
+  <script src="/chatbot-widget.js"></script>
+</body>
+</html>

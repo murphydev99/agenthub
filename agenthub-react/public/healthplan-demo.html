@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HealthFirst Insurance - Your Trusted Health Partner</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+    }
+    
+    /* Header */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-top {
+      background: #0066cc;
+      color: white;
+      padding: 8px 0;
+      font-size: 14px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    .header-top .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .contact-info {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .nav-main {
+      padding: 20px 0;
+    }
+    
+    .nav-main .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #0066cc;
+    }
+    
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #0066cc, #00a6fb);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 20px;
+    }
+    
+    .logo-text {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0066cc;
+    }
+    
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 40px;
+    }
+    
+    nav a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+    
+    nav a:hover {
+      color: #0066cc;
+    }
+    
+    .btn-primary {
+      background: #0066cc;
+      color: white;
+      padding: 10px 24px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background 0.3s;
+    }
+    
+    .btn-primary:hover {
+      background: #0052a3;
+    }
+    
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      padding: 80px 0;
+    }
+    
+    .hero-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    
+    .hero-text h1 {
+      font-size: 48px;
+      color: #0066cc;
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+    
+    .hero-text p {
+      font-size: 20px;
+      color: #64748b;
+      margin-bottom: 30px;
+    }
+    
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+    }
+    
+    .btn-secondary {
+      background: white;
+      color: #0066cc;
+      padding: 10px 24px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      border: 2px solid #0066cc;
+      transition: all 0.3s;
+    }
+    
+    .btn-secondary:hover {
+      background: #0066cc;
+      color: white;
+    }
+    
+    .hero-image {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    
+    .hero-image img {
+      width: 100%;
+      border-radius: 8px;
+    }
+    
+    /* Features Section */
+    .features {
+      padding: 80px 0;
+      background: white;
+    }
+    
+    .section-title {
+      text-align: center;
+      font-size: 36px;
+      color: #0066cc;
+      margin-bottom: 20px;
+    }
+    
+    .section-subtitle {
+      text-align: center;
+      font-size: 18px;
+      color: #64748b;
+      margin-bottom: 60px;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+    }
+    
+    .feature-card {
+      text-align: center;
+      padding: 40px 20px;
+      border-radius: 12px;
+      transition: transform 0.3s, box-shadow 0.3s;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    
+    .feature-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #0066cc, #00a6fb);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 36px;
+      color: white;
+    }
+    
+    .feature-card h3 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    
+    .feature-card p {
+      color: #64748b;
+      line-height: 1.6;
+    }
+    
+    /* Plans Section */
+    .plans {
+      padding: 80px 0;
+      background: #f8fafc;
+    }
+    
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+    }
+    
+    .plan-card {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      border: 2px solid #e5e7eb;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    
+    .plan-card.featured {
+      border-color: #0066cc;
+      transform: scale(1.05);
+    }
+    
+    .plan-card:hover {
+      transform: translateY(-5px);
+      border-color: #0066cc;
+    }
+    
+    .plan-name {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    
+    .plan-price {
+      font-size: 48px;
+      color: #0066cc;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    
+    .plan-price span {
+      font-size: 18px;
+      color: #64748b;
+    }
+    
+    .plan-features {
+      list-style: none;
+      margin: 30px 0;
+      text-align: left;
+    }
+    
+    .plan-features li {
+      padding: 12px 0;
+      border-bottom: 1px solid #f1f5f9;
+      color: #64748b;
+    }
+    
+    .plan-features li:before {
+      content: "✓";
+      color: #22c55e;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    
+    /* CTA Section */
+    .cta {
+      background: linear-gradient(135deg, #0066cc, #00a6fb);
+      padding: 80px 0;
+      text-align: center;
+      color: white;
+    }
+    
+    .cta h2 {
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+    
+    .cta p {
+      font-size: 20px;
+      margin-bottom: 30px;
+      opacity: 0.9;
+    }
+    
+    .btn-white {
+      background: white;
+      color: #0066cc;
+      padding: 14px 32px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-block;
+      transition: transform 0.3s;
+    }
+    
+    .btn-white:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Footer */
+    footer {
+      background: #1e293b;
+      color: white;
+      padding: 60px 0 20px;
+    }
+    
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    
+    .footer-column h3 {
+      margin-bottom: 20px;
+      color: #fff;
+    }
+    
+    .footer-column ul {
+      list-style: none;
+    }
+    
+    .footer-column a {
+      color: #94a3b8;
+      text-decoration: none;
+      display: block;
+      padding: 6px 0;
+      transition: color 0.3s;
+    }
+    
+    .footer-column a:hover {
+      color: #00a6fb;
+    }
+    
+    .footer-bottom {
+      border-top: 1px solid #334155;
+      padding-top: 20px;
+      text-align: center;
+      color: #94a3b8;
+    }
+    
+    /* Chat Widget Button */
+    .chat-button {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: linear-gradient(135deg, #0066cc, #00a6fb);
+      color: white;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,102,204,0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+      z-index: 1000;
+    }
+    
+    .chat-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(0,102,204,0.6);
+    }
+    
+    .badge {
+      background: #ef4444;
+      color: white;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 12px;
+      margin-left: 6px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-top">
+      <div class="container">
+        <div class="contact-info">
+          <span>📞 1-800-HEALTH1</span>
+          <span>✉️ support@healthfirst.com</span>
+        </div>
+        <div>
+          <span>Member Portal | Provider Portal | Employers</span>
+        </div>
+      </div>
+    </div>
+    <div class="nav-main">
+      <div class="container">
+        <a href="#" class="logo">
+          <div class="logo-icon">H</div>
+          <div class="logo-text">HealthFirst Insurance</div>
+        </a>
+        <nav>
+          <ul>
+            <li><a href="#plans">Our Plans</a></li>
+            <li><a href="#coverage">Coverage</a></li>
+            <li><a href="#providers">Find a Doctor</a></li>
+            <li><a href="#resources">Resources</a></li>
+            <li><a href="#about">About Us</a></li>
+          </ul>
+        </nav>
+        <a href="#" class="btn-primary">Get a Quote</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1>Your Health, Our Priority</h1>
+          <p>Comprehensive health insurance plans that protect you and your family. Get coverage that fits your needs and budget.</p>
+          <div class="hero-buttons">
+            <a href="#" class="btn-primary">Get Started</a>
+            <a href="#" class="btn-secondary">View Plans</a>
+          </div>
+        </div>
+        <div class="hero-image">
+          <div style="background: linear-gradient(135deg, #e0f2fe, #f0f9ff); padding: 60px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 80px;">👨‍⚕️👩‍⚕️</div>
+            <p style="margin-top: 20px; color: #0066cc; font-weight: 600;">Trusted by 2M+ Members</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <div class="container">
+      <h2 class="section-title">Why Choose HealthFirst?</h2>
+      <p class="section-subtitle">We're committed to making healthcare accessible and affordable</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🏥</div>
+          <h3>Nationwide Network</h3>
+          <p>Access to over 1 million healthcare providers and 6,000+ hospitals across the country</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💊</div>
+          <h3>Prescription Coverage</h3>
+          <p>Comprehensive drug coverage with access to 67,000+ pharmacies nationwide</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>Telehealth Services</h3>
+          <p>24/7 virtual care from board-certified doctors via phone or video</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Plans Section -->
+  <section class="plans" id="plans">
+    <div class="container">
+      <h2 class="section-title">Choose Your Plan</h2>
+      <p class="section-subtitle">Flexible options to meet your healthcare needs</p>
+      <div class="plans-grid">
+        <div class="plan-card">
+          <h3 class="plan-name">Bronze Plan</h3>
+          <div class="plan-price">$249<span>/month</span></div>
+          <ul class="plan-features">
+            <li>Primary care visits</li>
+            <li>Emergency coverage</li>
+            <li>Preventive care</li>
+            <li>Generic prescriptions</li>
+            <li>$7,500 deductible</li>
+          </ul>
+          <a href="#" class="btn-primary" style="width: 100%; display: block; text-align: center;">Select Plan</a>
+        </div>
+        <div class="plan-card featured">
+          <div class="badge" style="margin: -40px auto 20px; width: fit-content;">MOST POPULAR</div>
+          <h3 class="plan-name">Silver Plan</h3>
+          <div class="plan-price">$449<span>/month</span></div>
+          <ul class="plan-features">
+            <li>All Bronze benefits</li>
+            <li>Specialist visits</li>
+            <li>Brand prescriptions</li>
+            <li>Mental health coverage</li>
+            <li>$3,500 deductible</li>
+          </ul>
+          <a href="#" class="btn-primary" style="width: 100%; display: block; text-align: center;">Select Plan</a>
+        </div>
+        <div class="plan-card">
+          <h3 class="plan-name">Gold Plan</h3>
+          <div class="plan-price">$649<span>/month</span></div>
+          <ul class="plan-features">
+            <li>All Silver benefits</li>
+            <li>Dental & vision</li>
+            <li>Alternative medicine</li>
+            <li>International coverage</li>
+            <li>$1,000 deductible</li>
+          </ul>
+          <a href="#" class="btn-primary" style="width: 100%; display: block; text-align: center;">Select Plan</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta">
+    <div class="container">
+      <h2>Need Help Choosing the Right Plan?</h2>
+      <p>Our expert advisors are here to help you find the perfect coverage</p>
+      <a href="#" class="btn-white">Talk to an Advisor</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-column">
+          <h3>Plans & Coverage</h3>
+          <ul>
+            <li><a href="#">Individual & Family</a></li>
+            <li><a href="#">Medicare</a></li>
+            <li><a href="#">Medicaid</a></li>
+            <li><a href="#">Employer Plans</a></li>
+            <li><a href="#">Dental & Vision</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Member Resources</h3>
+          <ul>
+            <li><a href="#">Find a Doctor</a></li>
+            <li><a href="#">Pay My Bill</a></li>
+            <li><a href="#">Claims Status</a></li>
+            <li><a href="#">ID Cards</a></li>
+            <li><a href="#">Forms & Documents</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Tools & Support</h3>
+          <ul>
+            <li><a href="#">Cost Estimator</a></li>
+            <li><a href="#">Drug Formulary</a></li>
+            <li><a href="#">Health & Wellness</a></li>
+            <li><a href="#">FAQs</a></li>
+            <li><a href="#">Contact Us</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>About HealthFirst</h3>
+          <ul>
+            <li><a href="#">Our Company</a></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="#">News & Press</a></li>
+            <li><a href="#">Community Impact</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 HealthFirst Insurance. All rights reserved. | Privacy | Terms | Accessibility</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Embedded Chatbot -->
+  <script>
+    // Configuration for the chatbot
+    window.agentHubConfig = {
+      position: 'bottom-right',
+      primaryColor: '#0066cc',
+      title: 'HealthFirst Assistant',
+      welcomeMessage: 'Hello! I\'m here to help you with your health insurance questions. How can I assist you today?',
+      autoDetectWorkflow: true
+    };
+  </script>
+  <script src="/chatbot-widget.js"></script>
+</body>
+</html>

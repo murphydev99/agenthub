@@ -1,6 +1,7 @@
 (function() {
   // Token configuration for different environments
   const tokenConfig = {
+    'localhost:5173': 'fa0203a5dcac18d6524422d35b46d25fb21da314ec925d47e8092984e8d22ff4',
     'localhost:5174': '91b7f6f845a950cfaadc0cf478ee2e8d6b0fc1232b9e9757d8133a8b10624cdd',
     'agenthubdev.azurewebsites.net': '8716430d54c4cdc020842713c396450e9080c6252db1a1a84938b0f583da82d0', // Generate this token in admin panel
     // Add more domains and tokens as needed
@@ -20,7 +21,7 @@
   
   // Create iframe for the chatbot
   const iframe = document.createElement('iframe');
-  iframe.src = `${window.location.protocol}//${window.location.host}/chatbot`;
+  iframe.src = `${window.location.protocol}//${window.location.host}/chatbot?embedded=true`;
   iframe.style.position = 'fixed';
   iframe.style.bottom = '20px';
   iframe.style.right = '20px';
@@ -28,9 +29,11 @@
   iframe.style.height = '600px';
   iframe.style.border = 'none';
   iframe.style.borderRadius = '12px';
-  iframe.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+  iframe.style.boxShadow = 'none'; // Remove shadow completely
   iframe.style.zIndex = '9999';
-  iframe.style.display = 'none'; // Start hidden
+  iframe.style.display = 'block'; // Always show the iframe so the button is visible
+  iframe.style.background = 'transparent';
+  iframe.style.colorScheme = 'light';
   
   // Pass configuration to iframe
   iframe.onload = function() {
@@ -46,10 +49,8 @@
       config: config
     }, '*');
     
-    // Show the iframe after config is sent
-    setTimeout(() => {
-      iframe.style.display = 'block';
-    }, 100);
+    // Don't show the iframe immediately - wait for it to be opened
+    // The iframe will be shown when the user clicks the chat button
   };
   
   // Add iframe to page
