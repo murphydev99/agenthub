@@ -87,14 +87,30 @@ export function ChatWidget({
   // Initialize with welcome message
   useEffect(() => {
     if (isOpen && messages.length === 0 && !workflowStarted) {
+      // Show loading message if auto-detect is enabled and data isn't loaded yet
+      const message = autoDetectWorkflow && !dataLoaded 
+        ? `${welcomeMessage}\n\n⏳ Loading available workflows...`
+        : welcomeMessage;
+      
       setMessages([{
         id: '1',
         role: 'assistant',
-        content: welcomeMessage,
+        content: message,
         timestamp: new Date()
       }]);
+    } else if (isOpen && autoDetectWorkflow && dataLoaded && !workflowStarted && messages.length === 1) {
+      // Update the initial message once data has loaded
+      const firstMessage = messages[0];
+      if (firstMessage && firstMessage.content.includes('⏳ Loading available workflows...')) {
+        setMessages([{
+          id: '1',
+          role: 'assistant',
+          content: welcomeMessage,
+          timestamp: new Date()
+        }]);
+      }
     }
-  }, [isOpen, welcomeMessage, workflowStarted]);
+  }, [isOpen, welcomeMessage, workflowStarted, autoDetectWorkflow, dataLoaded, messages]);
   
   // Send minimize/maximize events to parent if embedded
   useEffect(() => {
@@ -199,30 +215,7 @@ export function ChatWidget({
 
   const fetchAliases = async () => {
     try {
-      // Check if we have cached aliases in sessionStorage
-      const cachedAliases = sessionStorage.getItem('chatbot_aliases');
-      const cacheTimestamp = sessionStorage.getItem('chatbot_aliases_timestamp');
-      const cacheMaxAge = 5 * 60 * 1000; // 5 minutes cache
-      
-      if (cachedAliases && cacheTimestamp) {
-        const age = Date.now() - parseInt(cacheTimestamp);
-        if (age < cacheMaxAge) {
-          const aliases = JSON.parse(cachedAliases);
-          setAllAliases(aliases);
-          setDataLoaded(true);
-          console.log(`Using cached aliases: ${aliases.length} workflows`);
-          
-          // Initialize vector store with cached aliases
-          if (import.meta.env.VITE_OPENAI_API_KEY) {
-            vectorStore.initialize(aliases, import.meta.env.VITE_OPENAI_API_KEY)
-              .then(() => console.log('Vector store initialized with cached data'))
-              .catch(err => console.error('Failed to initialize vector store:', err));
-          }
-          return;
-        }
-      }
-      
-      // Use chatbot-specific endpoint if domain token is provided
+      // Always fetch fresh data - no caching
       const endpoint = domainToken ? `${API_URL}/chatbot/aliases` : `${API_URL}/aliases`;
       const response = await fetch(endpoint, {
         headers: getApiHeaders()
@@ -232,10 +225,6 @@ export function ChatWidget({
         const aliases = await response.json();
         // Filter out aliases without workflow names
         const validAliases = aliases.filter((a: any) => a.WorkflowName && a.WorkflowName !== null);
-        
-        // Cache the aliases
-        sessionStorage.setItem('chatbot_aliases', JSON.stringify(validAliases));
-        sessionStorage.setItem('chatbot_aliases_timestamp', Date.now().toString());
         
         setAllAliases(validAliases);
         setDataLoaded(true);
@@ -878,6 +867,17 @@ The numbers should be ordered by relevance with the best match first`;
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
     
+    // Wait for data to load if using auto-detect
+    if (autoDetectWorkflow && !dataLoaded) {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: 'Please wait while I load the available workflows...',
+        timestamp: new Date()
+      }]);
+      return;
+    }
+    
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -1222,6 +1222,15 @@ Return ONLY the extracted value or "INVALID_RESPONSE", nothing else.`;
               // Clear workflow by loading an empty workflow
               loadWorkflow({ WorkflowName: '', Steps: [] });
               
+              // Clear any cached data to force fresh fetch
+              sessionStorage.removeItem('chatbot_aliases');
+              sessionStorage.removeItem('chatbot_aliases_timestamp');
+              
+              // Re-fetch aliases for fresh data
+              setAllAliases([]);
+              setDataLoaded(false);
+              fetchAliases();
+              
               // Re-add welcome message if auto-detect is enabled
               if (autoDetectWorkflow) {
                 setMessages([{
@@ -1261,6 +1270,10 @@ Return ONLY the extracted value or "INVALID_RESPONSE", nothing else.`;
               
               // Clear workflow by loading an empty workflow
               loadWorkflow({ WorkflowName: '', Steps: [] });
+              
+              // Clear any cached data to ensure fresh data on next open
+              sessionStorage.removeItem('chatbot_aliases');
+              sessionStorage.removeItem('chatbot_aliases_timestamp');
               
               // Will re-initialize with welcome message when reopened
             }}
