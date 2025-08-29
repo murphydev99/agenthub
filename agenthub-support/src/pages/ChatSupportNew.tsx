@@ -581,7 +581,7 @@ Order by relevance with best match first`;
                   : 'px-4 py-3 bg-white rounded-2xl rounded-tl-sm shadow-sm border border-gray-100'
               }`}>
                 <div 
-                  className="text-sm leading-relaxed"
+                  className="text-sm leading-relaxed chat-message"
                   dangerouslySetInnerHTML={{ __html: message.content }}
                 />
               </div>

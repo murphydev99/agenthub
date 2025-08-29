@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+/* Chat message link styles */
+.chat-message a {
+  color: #0066cc;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.chat-message a:hover {
+  color: #0052a3;
+  text-decoration: underline;
+}
+
+.chat-message a:visited {
+  color: #551a8b;
+}

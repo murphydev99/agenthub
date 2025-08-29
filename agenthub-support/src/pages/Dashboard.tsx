@@ -308,15 +308,23 @@ export function Dashboard() {
                 </div>
                 <button 
                   onClick={() => navigate('/tickets')}
-                  className="text-xs text-[#E94B4B] hover:text-red-600 font-medium">
+                  className="text-xs text-[#E94B4B] hover:text-red-600 font-medium cursor-pointer">
                   View All Tickets →
                 </button>
               </div>
             </div>
             
             <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-              <div className="divide-y divide-gray-100">
-                {recentTickets.map((ticket) => (
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E94B4B] mx-auto mb-4"></div>
+                    <p className="text-sm text-gray-500">Loading tickets...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {recentTickets.map((ticket) => (
                   <div key={ticket.id} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
@@ -355,8 +363,9 @@ export function Dashboard() {
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#3b82f6" opacity="0.1"/>
+  
+  <!-- Main workflow nodes and connections -->
+  <!-- Left node -->
+  <circle cx="30" cy="40" r="12" fill="#3b82f6" stroke="#2563eb" stroke-width="2"/>
+  
+  <!-- Top right node -->
+  <circle cx="80" cy="30" r="12" fill="#8b5cf6" stroke="#7c3aed" stroke-width="2"/>
+  
+  <!-- Middle node (decision point) -->
+  <rect x="52" y="52" width="24" height="24" rx="4" fill="#10b981" stroke="#059669" stroke-width="2" transform="rotate(45 64 64)"/>
+  
+  <!-- Bottom left node -->
+  <circle cx="35" cy="85" r="12" fill="#f59e0b" stroke="#d97706" stroke-width="2"/>
+  
+  <!-- Bottom right node -->
+  <circle cx="90" cy="90" r="12" fill="#ef4444" stroke="#dc2626" stroke-width="2"/>
+  
+  <!-- Connection lines -->
+  <path d="M 42 40 L 52 52" stroke="#6b7280" stroke-width="2" fill="none"/>
+  <path d="M 68 30 L 64 52" stroke="#6b7280" stroke-width="2" fill="none"/>
+  <path d="M 64 76 L 47 85" stroke="#6b7280" stroke-width="2" fill="none"/>
+  <path d="M 76 76 L 78 90" stroke="#6b7280" stroke-width="2" fill="none"/>
+  
+  <!-- Arrow heads -->
+  <polygon points="52,52 50,48 48,50" fill="#6b7280"/>
+  <polygon points="64,52 62,48 66,48" fill="#6b7280"/>
+  <polygon points="47,85 49,81 51,83" fill="#6b7280"/>
+  <polygon points="78,90 76,86 80,86" fill="#6b7280"/>
+</svg>
