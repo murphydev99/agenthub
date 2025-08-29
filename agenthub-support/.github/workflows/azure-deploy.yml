@@ -1,4 +1,4 @@
-name: Deploy to Azure Web App
+name: Deploy AgentHub Support to Azure
 
 on:
   push:

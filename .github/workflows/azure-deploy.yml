@@ -1,9 +1,12 @@
-name: Deploy to Azure Web App
+name: Deploy AgentHub React to Azure
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'agenthub-react/**'
+      - '.github/workflows/azure-deploy.yml'
   workflow_dispatch:
 
 env:

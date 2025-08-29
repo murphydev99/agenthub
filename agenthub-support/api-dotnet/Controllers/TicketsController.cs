@@ -54,15 +54,43 @@ public class TicketsController : ControllerBase
     {
         try
         {
-            // Get the authenticated user's email from claims
+            // Log all available claims for debugging
+            _logger.LogInformation("Total claims count: {Count}", User.Claims.Count());
+            foreach (var claim in User.Claims)
+            {
+                _logger.LogInformation("Claim: {Type} = {Value}", claim.Type, claim.Value);
+            }
+            
+            // Get user information from B2C ID token claims
+            // Common B2C ID token claims:
+            // - name: Display name
+            // - given_name: First name  
+            // - family_name: Last name
+            // - emails: Email (may be JSON array)
+            // - email: Email
+            // - sub: Subject identifier
+            var userName = User.FindFirst("name")?.Value ?? 
+                          User.FindFirst("given_name")?.Value ?? 
+                          User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ??
+                          User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value ??
+                          "Customer";
+            
             var userEmail = User.FindFirst("emails")?.Value ?? 
                            User.FindFirst("email")?.Value ?? 
-                           User.FindFirst("preferred_username")?.Value;
+                           User.FindFirst("preferred_username")?.Value ??
+                           User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value ??
+                           User.FindFirst("upn")?.Value;
             
             // Set the caller email to the authenticated user's email
             dto.CallerEmail = userEmail;
             
-            _logger.LogInformation("Creating ticket for user: {Email}", userEmail);
+            // Add user identification to the description
+            if (!string.IsNullOrEmpty(dto.Description))
+            {
+                dto.Description = $"[Submitted by {userName} ({userEmail})]\n\n{dto.Description}";
+            }
+            
+            _logger.LogInformation("Creating ticket for user: {Name} ({Email})", userName, userEmail);
             
             var response = await _serviceNowClient.CreateTicketAsync(dto);
             return Ok(response);
@@ -79,7 +107,30 @@ public class TicketsController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Updating ticket {TicketId}", id);
+            // Get user information from B2C ID token claims
+            var userName = User.FindFirst("name")?.Value ?? 
+                          User.FindFirst("given_name")?.Value ?? 
+                          User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ??
+                          User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value ??
+                          "Customer";
+            
+            var userEmail = User.FindFirst("emails")?.Value ?? 
+                           User.FindFirst("email")?.Value ?? 
+                           User.FindFirst("preferred_username")?.Value ??
+                           User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value ??
+                           User.FindFirst("upn")?.Value;
+            
+            _logger.LogInformation("Updating ticket {TicketId} for user: {Name} ({Email})", id, userName, userEmail);
+            
+            // Prepend user identification to the comment
+            if (!string.IsNullOrEmpty(dto.CustomerComment))
+            {
+                dto.CustomerComment = $"[Comment from {userName} ({userEmail})]\n{dto.CustomerComment}";
+            }
+            if (!string.IsNullOrEmpty(dto.Description))
+            {
+                dto.Description = $"[Update from {userName} ({userEmail})]\n{dto.Description}";
+            }
             
             var response = await _serviceNowClient.UpdateTicketAsync(id, dto);
             return Ok(response);

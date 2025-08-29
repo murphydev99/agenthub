@@ -493,26 +493,221 @@ interface AuthState {
 ### AgentHub Support API (Separate Project)
 - **Location**: `/agenthub-support-api` - Separate .NET API project (different from the one in agenthub-support)
 
-## TODO: Fix B2C Authentication Scope Issue
+## Azure Deployment Guide for React Apps (GitHub Actions)
 
-**Issue**: The B2C authentication with custom scopes is not working properly. Currently **ALL AUTHENTICATION IS DISABLED** in `TicketsController.cs` for testing.
+### Prerequisites
+1. **Azure Resources**:
+   - Resource Group: `DEV-InternalProject`
+   - App Service Plan: Linux-based (e.g., `AgentHubDevPlan`)
+   - Create Web App: `az webapp create --resource-group DEV-InternalProject --plan YourPlan --name your-app-name --runtime "NODE:18-lts"`
 
-**Current Status**:
-- `[Authorize]` attribute is commented out - **API IS COMPLETELY UNPROTECTED**
-- B2C returns ID tokens but not access tokens for basic scopes
-- The API expects access tokens, not ID tokens
+2. **GitHub Secrets**:
+   - Create service principal: `az ad sp create-for-rbac --name "your-app-github-action" --role contributor --scopes /subscriptions/{subscription-id}/resourceGroups/DEV-InternalProject --sdk-auth`
+   - Add to GitHub: `gh secret set AZURE_CREDENTIALS --body '{...json output...}'`
+   - Add any API keys as secrets (e.g., `OPENAI_API_KEY`)
 
-**What needs to be fixed**:
-1. The API expects the scope `https://VistioSelfServiceDEV.onmicrosoft.com/9bac66e0-6d6c-494e-b5a1-15e04d343110/access_as_user`
-2. The frontend needs to properly acquire access tokens (not ID tokens) with this scope
-3. Currently using basic `openid` and `profile` scopes which only return ID tokens
-4. Both `[Authorize]` and `[RequiredScope]` attributes are commented out in `api-dotnet/Controllers/TicketsController.cs`
+### GitHub Action Workflow Template
 
-**Files to update**:
-- `/api-dotnet/Controllers/TicketsController.cs` - Re-enable both `[Authorize]` and `[RequiredScope]` attributes
-- `/src/services/api.ts` - Fix token acquisition to use the proper scope and get access tokens
-- `/src/config/authConfig.ts` - Ensure login requests include the custom scope
-- May need to configure API to accept ID tokens or configure B2C to issue access tokens
+**CRITICAL**: The workflow MUST create a ZIP file before deployment. Azure WebApp deploy action requires a ZIP file, not a folder path!
+
+```yaml
+name: Deploy to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'your-app-folder/**'  # Optional: only trigger on changes to your app
+      - '.github/workflows/your-workflow.yml'
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: your-app-name
+  AZURE_WEBAPP_PACKAGE_PATH: './dist'  # or './your-app-folder/dist' for monorepo
+  NODE_VERSION: '18.x'
+  WORKING_DIRECTORY: '.'  # or './your-app-folder' for monorepo
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+      working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    - name: Build for production
+      run: npm run build
+      working-directory: ${{ env.WORKING_DIRECTORY }}
+      env:
+        # Add your environment variables here
+        VITE_API_URL: https://your-api.azurewebsites.net/api
+        VITE_APP_ENV: production
+
+    # CRITICAL: Must create ZIP file!
+    - name: Create deployment package
+      run: |
+        cd ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+        zip -r ../deploy.zip .
+        cd ..
+
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: deploy.zip  # MUST be a ZIP file!
+
+    - name: Configure startup command
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          az webapp config set \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group DEV-InternalProject \
+            --startup-file "pm2 serve /home/site/wwwroot --no-daemon --spa"
+
+    - name: Logout from Azure
+      run: az logout
+```
+
+### Key Configuration Points
+
+1. **ZIP File Creation** (CRITICAL):
+   - The deployment MUST use a ZIP file
+   - Create ZIP from dist folder: `cd dist && zip -r ../deploy.zip .`
+   - Deploy the ZIP: `package: deploy.zip`
+   - **Common mistake**: Using `package: ./dist` or `package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}` directly won't work!
+
+2. **Startup Command**:
+   - Use PM2 to serve the SPA: `pm2 serve /home/site/wwwroot --no-daemon --spa`
+   - The `--spa` flag ensures proper routing for single-page applications
+   - Set this after deployment to ensure it persists
+
+3. **App Service Configuration**:
+   ```bash
+   # Set Node version
+   az webapp config appsettings set --resource-group DEV-InternalProject --name your-app --settings WEBSITE_NODE_DEFAULT_VERSION="~18"
+   
+   # Enable build during deployment if needed
+   az webapp config appsettings set --resource-group DEV-InternalProject --name your-app --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
+   ```
+
+4. **Monorepo Setup**:
+   - Set `WORKING_DIRECTORY` to your app's folder
+   - Adjust paths in the workflow accordingly
+   - Use path filters to trigger only on relevant changes
+
+5. **Troubleshooting**:
+   - Check logs: `az webapp log tail --resource-group DEV-InternalProject --name your-app`
+   - Verify files deployed: Use Kudu console at `https://your-app.scm.azurewebsites.net`
+   - Common issue: Files not in `/home/site/wwwroot` means ZIP wasn't created/deployed correctly
+
+### Working Examples
+- **agenthub-react**: Deploys to `AgentHubDev` - see `.github/workflows/azure-deploy.yml`
+- **agenthub-support**: Deploys to `agenthub-support` - see `agenthub-support/.github/workflows/azure-deploy.yml`
+
+## Current Project Status (As of August 29, 2025)
+
+### ✅ Completed Features
+
+1. **ServiceNow Integration**
+   - Fixed ticket creation with proper impact/urgency levels
+   - Implemented ticket viewing and updating
+   - Added audit history and comments tracking
+   - Proper separation of work notes vs customer comments
+   - Customer can add comments and update impact/urgency
+
+2. **Chat Support with Workflow Integration**
+   - Fully integrated chat system from agenthub-react project
+   - AI-powered workflow search using OpenAI (GPT-5-mini model)
+   - Workflow execution with SubSteps support
+   - Variable interpolation and collection
+   - ServiceNow ticket creation from workflow answers (system.servicenow command format: `system.servicenow(Title,Description,Impact,Urgency)`)
+
+3. **UI/UX Updates**
+   - Fixed timestamp display issues
+   - Updated styling to match site design (red #E94B4B/dark blue #0B2545 theme)
+   - HTML rendering in workflow prompts
+   - App title changed to "AgentHub Support"
+   - Professional dashboard with real-time stats
+
+4. **State Management**
+   - Using shared chatbotWorkflowStore from agenthub-react (exact copy to avoid duplication)
+   - Proper handling of workflow SubSteps
+   - Variable store integration
+
+### 🔧 In Progress: B2C User Identification
+
+**Current Issue**: User identification in ServiceNow showing as "Customer ()" with no name/email.
+
+**Root Cause**: 
+- B2C sign-in flow not returning user profile claims (name, email)
+- ID token being used instead of access token
+- ID token only contains basic claims (sub, aud, iss) but no user profile data
+- Account object shows `username: ''` is empty
+
+**What's Been Done**:
+- API updated to extract B2C claims properly (checking multiple claim types)
+- Added comprehensive claim logging
+- Prepared user identification format: "[Submitted by {name} ({email})]"
+- Both CreateTicket and UpdateTicket methods ready to use B2C claims
+
+**Next Steps**:
+1. **B2C Configuration** - Update B2C sign-in flow to include user profile claims
+2. **Token Scopes** - May need to request additional scopes during login
+3. **User Attributes** - Ensure B2C user attributes include display name and email
+
+**Files Ready for B2C Integration**:
+- `/api-dotnet/Controllers/TicketsController.cs` - Ready to extract claims once available
+- `/src/services/api.ts` - Sending ID token in Authorization header
+- User identification will show in ServiceNow as: "[Submitted by John Doe (john.doe@example.com)]"
+
+### 🚀 Quick Start
+
+1. Start the API: 
+   ```bash
+   cd /Users/murphsea/agenthub/agenthub-support/api-dotnet
+   dotnet run
+   ```
+
+2. Start the frontend:
+   ```bash
+   cd /Users/murphsea/agenthub/agenthub-support
+   npm run dev
+   ```
+
+3. Access the application: http://localhost:5174
+
+### 📋 Environment Variables (.env)
+```
+VITE_API_URL=http://localhost:5006/api
+VITE_WORKFLOW_API_URL=http://localhost:4000/api
+VITE_WORKFLOW_API_KEY=e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa
+VITE_OPENAI_API_KEY=sk-svcacct-[...]
+```
+
+### 📝 Important Implementation Notes
+
+1. **Shared Code**: Using exact chatbotWorkflowStore from agenthub-react project
+2. **ServiceNow Execute**: Format is `system.servicenow(Title,Description,Impact,Urgency)` where Impact/Urgency are 1-3
+3. **Chat Workflow Processing**: Handles SubSteps within answers
+4. **Authentication**: Currently using B2C ID tokens (need profile claims enabled)
 
 ## Conclusion
 
