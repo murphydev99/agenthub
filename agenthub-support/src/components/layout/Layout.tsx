@@ -24,6 +24,19 @@ import { useState } from 'react';
 export function Layout() {
   const { user, logout } = useAuthB2C();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Extract user info from B2C claims
+  const userName = user?.name || user?.username || 'User';
+  
+  // Get user initials from name
+  const getUserInitials = (name: string) => {
+    if (!name || name === 'User') return 'U';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return parts[0][0].toUpperCase() + parts[parts.length - 1][0].toUpperCase();
+    }
+    return name[0].toUpperCase();
+  };
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -95,10 +108,10 @@ export function Layout() {
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#E94B4B] to-red-600 flex items-center justify-center text-white font-bold">
-                  JF
+                  {getUserInitials(userName)}
                 </div>
                 <div>
-                  <div className="font-medium text-sm text-gray-900">{user?.name}</div>
+                  <div className="font-medium text-sm text-gray-900">{userName}</div>
                   <div className="text-xs text-gray-500">Franchisee #FR-12345</div>
                 </div>
               </div>
@@ -167,10 +180,10 @@ export function Layout() {
               <div className="p-4 border-b border-gray-100">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#E94B4B] to-red-600 flex items-center justify-center text-white font-bold">
-                    JF
+                    {getUserInitials(userName)}
                   </div>
                   <div>
-                    <div className="font-medium text-sm text-gray-900">{user?.name}</div>
+                    <div className="font-medium text-sm text-gray-900">{userName}</div>
                     <div className="text-xs text-gray-500">Franchisee #FR-12345</div>
                   </div>
                 </div>
