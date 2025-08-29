@@ -149,16 +149,26 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-full max-w-3xl mx-4 max-h-[70vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {loading ? 'Loading...' : ticket ? `Ticket ${ticket.number}` : 'Ticket Details'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-start justify-between">
+            <h2 className="text-xl font-semibold text-gray-900">
+              {loading ? 'Loading...' : ticket ? `Ticket ${ticket.number}` : 'Ticket Details'}
+            </h2>
+            <div className="flex items-start gap-4">
+              {ticket && !loading && (
+                <div className="text-xs text-gray-500 text-right">
+                  <div>Created: {new Date(ticket.createdAt).toLocaleDateString()}</div>
+                  <div>Updated: {new Date(ticket.updatedAt).toLocaleDateString()}</div>
+                </div>
+              )}
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-500 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {loading && (
@@ -207,17 +217,6 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">Created</h4>
-                  <p className="text-gray-900">{new Date(ticket.createdAt).toLocaleString()}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">Last Updated</h4>
-                  <p className="text-gray-900">{new Date(ticket.updatedAt).toLocaleString()}</p>
-                </div>
-              </div>
-
               {ticket.assignedTo && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-1">Assigned To</h4>
@@ -226,157 +225,30 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
               )}
             </div>
 
-            {/* Comments Section - Only show customer-visible comments */}
-            {ticket.comments && (
+            {/* Combined Activity Feed - Comments and Field Changes */}
+            {(ticket.comments || ticket.auditHistory) && (
               <div className="border-t pt-6 space-y-4">
-                <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Communication History
-                </h4>
-                
-                <div className="space-y-3">
-                  <h5 className="text-xs font-medium text-gray-700">Communication History</h5>
-                  {/* Chat-like interface for comments */}
-                  <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
-                    <div className="space-y-3">
-                      {(() => {
-                        const comments = [];
-                        let currentComment = [];
-                        let currentTimestamp = null;
-                        let currentUser = null;
-                        let isAgentHub = false;
-                        
-                        ticket.comments.split('\n').forEach((line) => {
-                          // Check if this is a timestamp header
-                          const headerMatch = line.match(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (.+?) \(Additional comments\)$/);
-                          
-                          if (headerMatch) {
-                            // Save previous comment if exists
-                            if (currentComment.length > 0) {
-                              comments.push({
-                                timestamp: currentTimestamp,
-                                user: currentUser,
-                                text: currentComment.join('\n').trim(),
-                                isAgentHub: isAgentHub
-                              });
-                              currentComment = [];
-                            }
-                            
-                            // Start new comment
-                            currentTimestamp = headerMatch[1];
-                            currentUser = headerMatch[2];
-                            isAgentHub = currentUser === 'AgentHub Integration';
-                          } else if (line.trim()) {
-                            // Add line to current comment
-                            currentComment.push(line);
-                          }
-                        });
-                        
-                        // Add the last comment
-                        if (currentComment.length > 0) {
-                          comments.push({
-                            timestamp: currentTimestamp,
-                            user: currentUser,
-                            text: currentComment.join('\n').trim(),
-                            isAgentHub: isAgentHub
-                          });
-                        }
-                        
-                        // Render comments as chat messages
-                        return comments.map((comment, index) => (
-                          <div key={index} className={`flex ${comment.isAgentHub ? 'justify-end' : 'justify-start'} mb-3`}>
-                            <div className={`max-w-[75%] ${comment.isAgentHub ? 'order-2' : ''}`}>
-                              <div className={`rounded-lg p-3 ${
-                                comment.isAgentHub 
-                                  ? 'border-2 border-[#E94B4B] bg-red-50' 
-                                  : 'bg-white border border-gray-300'
-                              }`}>
-                                {comment.timestamp && (
-                                  <div className={`text-xs font-medium mb-2 ${
-                                    comment.isAgentHub ? 'text-[#E94B4B]' : 'text-gray-500'
-                                  }`}>
-                                    {comment.timestamp}
-                                    {!comment.isAgentHub && comment.user ? ` - ${comment.user}` : ''}
-                                  </div>
-                                )}
-                                <div className={`text-sm whitespace-pre-wrap ${
-                                  comment.isAgentHub ? 'text-gray-700' : 'text-gray-700'
-                                }`}>
-                                  {comment.text}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ));
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Audit History Section */}
-            {ticket.auditHistory && ticket.auditHistory.length > 0 && (
-              <div className="border-t pt-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                  <History className="h-4 w-4" />
-                  Activity History
-                </h4>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {ticket.auditHistory.map((entry: AuditEntry, index: number) => (
-                    <div key={index} className="flex items-start gap-3 text-xs">
-                      <div className="w-2 h-2 rounded-full bg-gray-400 mt-1 flex-shrink-0"></div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-gray-700">{entry.field}</span>
-                          <span className="text-gray-400">•</span>
-                          <span className="text-gray-500">
-                            {new Date(entry.timestamp).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="text-gray-600">
-                          {entry.oldValue !== 'None' && (
-                            <span className="line-through mr-2">{entry.oldValue}</span>
-                          )}
-                          <span className="font-medium text-gray-900">→ {entry.newValue}</span>
-                        </div>
-                        {entry.updatedBy && (
-                          <div className="text-gray-500 mt-1 flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            {entry.updatedBy}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Customer Update Section */}
-            {ticket.status !== 'closed' && ticket.status !== 'resolved' && (
-              <div className="border-t pt-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-medium text-gray-700">Add Update</h4>
-                  <button
-                    onClick={() => {
-                      setShowCustomerUpdate(!showCustomerUpdate);
-                      // Scroll to the update section after a brief delay to allow it to render
-                      if (!showCustomerUpdate) {
-                        setTimeout(() => {
-                          updateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                        }, 100);
-                      }
-                    }}
-                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                  >
-                    <Edit3 className="h-3 w-3" />
-                    {showCustomerUpdate ? 'Cancel' : 'Add Comment/Update Priority'}
-                  </button>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <History className="h-4 w-4" />
+                    Activity & Comments
+                  </h4>
+                  {ticket.status !== 'closed' && ticket.status !== 'resolved' && (
+                    <button
+                      onClick={() => {
+                        setShowCustomerUpdate(!showCustomerUpdate);
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    >
+                      <Edit3 className="h-3 w-3" />
+                      {showCustomerUpdate ? 'Cancel' : 'Add Comment/Update Priority'}
+                    </button>
+                  )}
                 </div>
                 
-                {showCustomerUpdate && (
-                  <div ref={updateSectionRef} className="space-y-4 bg-gray-50 rounded-lg p-4">
+                {/* Customer Update Section - Show before comments */}
+                {showCustomerUpdate && ticket.status !== 'closed' && ticket.status !== 'resolved' && (
+                  <div ref={updateSectionRef} className="space-y-4 bg-blue-50 rounded-lg p-4 border border-blue-200">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
                         Add Comment (Optional)
@@ -390,7 +262,7 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
                       />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Update Impact (Optional)
@@ -401,9 +273,9 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                         >
                           <option value="">Keep current</option>
-                          <option value="1">1 - High</option>
-                          <option value="2">2 - Medium</option>
-                          <option value="3">3 - Low</option>
+                          <option value="1">1 - High (Widespread)</option>
+                          <option value="2">2 - Medium (Multiple users)</option>
+                          <option value="3">3 - Low (Single user)</option>
                         </select>
                       </div>
                       
@@ -417,26 +289,23 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                         >
                           <option value="">Keep current</option>
-                          <option value="1">1 - High</option>
-                          <option value="2">2 - Medium</option>
-                          <option value="3">3 - Low</option>
+                          <option value="1">1 - High (Critical)</option>
+                          <option value="2">2 - Medium (Normal)</option>
+                          <option value="3">3 - Low (Can wait)</option>
                         </select>
                       </div>
                     </div>
                     
-                    {updatedImpact && updatedUrgency && (
-                      <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded">
-                        Note: Changing impact and urgency will update the ticket priority
-                      </div>
-                    )}
-                    
                     <button
                       onClick={handleCustomerUpdate}
-                      disabled={updating || (!customerComment && (!updatedImpact || !updatedUrgency))}
-                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                      disabled={updating || (!customerComment && !updatedImpact && !updatedUrgency)}
+                      className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm"
                     >
                       {updating ? (
-                        'Updating...'
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Updating...
+                        </>
                       ) : (
                         <>
                           <Send className="h-4 w-4" />
@@ -446,8 +315,148 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
                     </button>
                   </div>
                 )}
+                
+                <div className="space-y-3">
+                  {/* Combined activity feed */}
+                  <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                    <div className="space-y-3">
+                      {(() => {
+                        const activities = [];
+                        
+                        // Process comments
+                        if (ticket.comments) {
+                          const comments = [];
+                          let currentComment = [];
+                          let currentTimestamp = null;
+                          let currentUser = null;
+                          let isAgentHub = false;
+                          
+                          ticket.comments.split('\n').forEach((line) => {
+                            const headerMatch = line.match(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (.+?) \(Additional comments\)$/);
+                            
+                            if (headerMatch) {
+                              if (currentComment.length > 0) {
+                                comments.push({
+                                  type: 'comment',
+                                  timestamp: currentTimestamp,
+                                  user: currentUser,
+                                  text: currentComment.join('\n').trim(),
+                                  isAgentHub: isAgentHub
+                                });
+                                currentComment = [];
+                              }
+                              
+                              currentTimestamp = headerMatch[1];
+                              currentUser = headerMatch[2];
+                              isAgentHub = currentUser === 'AgentHub Integration';
+                            } else if (line.trim()) {
+                              currentComment.push(line);
+                            }
+                          });
+                          
+                          if (currentComment.length > 0) {
+                            comments.push({
+                              type: 'comment',
+                              timestamp: currentTimestamp,
+                              user: currentUser,
+                              text: currentComment.join('\n').trim(),
+                              isAgentHub: isAgentHub
+                            });
+                          }
+                          
+                          activities.push(...comments);
+                        }
+                        
+                        // Process audit history (field changes)
+                        if (ticket.auditHistory && ticket.auditHistory.length > 0) {
+                          const fieldChanges = ticket.auditHistory
+                            .filter((entry: AuditEntry) => 
+                              entry.field !== 'Comment Added' && 
+                              entry.field !== 'Work Note Added'
+                            )
+                            .map((entry: AuditEntry) => ({
+                              type: 'field_change',
+                              timestamp: entry.timestamp,
+                              field: entry.field,
+                              oldValue: entry.oldValue,
+                              newValue: entry.newValue,
+                              updatedBy: entry.updatedBy
+                            }));
+                          
+                          activities.push(...fieldChanges);
+                        }
+                        
+                        // Sort activities by timestamp (newest first)
+                        activities.sort((a, b) => {
+                          const dateA = new Date(a.timestamp || '').getTime();
+                          const dateB = new Date(b.timestamp || '').getTime();
+                          return dateB - dateA;
+                        });
+                        
+                        // Render activities
+                        return activities.map((activity, index) => {
+                          if (activity.type === 'comment') {
+                            return (
+                              <div key={`comment-${index}`} className={`flex ${activity.isAgentHub ? 'justify-end' : 'justify-start'} mb-3`}>
+                                <div className={`max-w-[75%] ${activity.isAgentHub ? 'order-2' : ''}`}>
+                                  <div className={`rounded-lg p-3 ${
+                                    activity.isAgentHub 
+                                      ? 'border-2 border-[#E94B4B] bg-red-50' 
+                                      : 'bg-white border border-gray-300'
+                                  }`}>
+                                    {activity.timestamp && (
+                                      <div className={`text-xs font-medium mb-2 ${
+                                        activity.isAgentHub ? 'text-[#E94B4B]' : 'text-gray-500'
+                                      }`}>
+                                        {activity.timestamp}
+                                        {!activity.isAgentHub && activity.user ? ` - ${activity.user}` : ''}
+                                      </div>
+                                    )}
+                                    <div className="text-sm whitespace-pre-wrap text-gray-700">
+                                      {activity.text}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          } else if (activity.type === 'field_change') {
+                            return (
+                              <div key={`field-${index}`} className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-400 mb-3">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="text-xs text-gray-500 mb-1">
+                                      {new Date(activity.timestamp).toLocaleString()}
+                                    </div>
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {activity.field} Changed
+                                    </div>
+                                    <div className="text-sm text-gray-600 mt-1">
+                                      {activity.oldValue !== 'None' && (
+                                        <><span className="line-through">{activity.oldValue}</span> → </>
+                                      )}
+                                      <span className="font-medium text-gray-900">{activity.newValue}</span>
+                                    </div>
+                                    {activity.updatedBy && (
+                                      <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                        <User className="h-3 w-3" />
+                                        {activity.updatedBy}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        });
+                      })()}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
+
+
 
 
             {(ticket.status === 'closed' || ticket.status === 'resolved') && (

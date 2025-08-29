@@ -221,9 +221,11 @@ public class ServiceNowClient : IServiceNowClient
         try
         {
             var request = new RestRequest($"/api/now/table/sys_audit");
-            request.AddParameter("sysparm_query", $"documentkey={ticketId}^tablename=incident");
-            request.AddParameter("sysparm_limit", 50);
-            request.AddParameter("sysparm_orderby", "sys_created_on^desc");
+            // Use fieldnameIN to query multiple fields (excluding comments which we get separately)
+            request.AddParameter("sysparm_query", $"tablename=incident^documentkey={ticketId}^fieldnameINimpact,urgency,state,priority,assigned_to,incident_state^ORDERBYsys_created_on");
+            request.AddParameter("sysparm_fields", "sys_created_on,sys_created_by,fieldname,oldvalue,newvalue");
+            request.AddParameter("sysparm_display_value", "all");
+            request.AddParameter("sysparm_limit", 200);
             
             var response = await _client.GetAsync<ServiceNowAuditResponse>(request);
             
@@ -231,14 +233,13 @@ public class ServiceNowClient : IServiceNowClient
                 return new List<AuditEntry>();
             
             return response.Result
-                .Where(a => a.fieldname == "state" || a.fieldname == "priority" || a.fieldname == "assigned_to" || a.fieldname == "comments" || a.fieldname == "work_notes")
                 .Select(a => new AuditEntry
                 {
                     Timestamp = a.sys_created_on,
                     Field = MapFieldName(a.fieldname),
-                    OldValue = MapFieldValue(a.fieldname, a.oldvalue),
-                    NewValue = MapFieldValue(a.fieldname, a.newvalue),
-                    UpdatedBy = a.user
+                    OldValue = GetAuditFieldValue(a.fieldname, a.oldvalue, true),
+                    NewValue = GetAuditFieldValue(a.fieldname, a.newvalue, false),
+                    UpdatedBy = !string.IsNullOrEmpty(a.sys_created_by) ? a.sys_created_by : a.user
                 })
                 .ToList();
         }
@@ -255,11 +256,47 @@ public class ServiceNowClient : IServiceNowClient
         {
             "state" => "Status",
             "priority" => "Priority",
+            "impact" => "Impact",
+            "urgency" => "Urgency",
             "assigned_to" => "Assigned To",
             "comments" => "Comment Added",
             "work_notes" => "Work Note Added",
             _ => fieldname
         };
+    }
+    
+    private string GetAuditFieldValue(string fieldname, dynamic value, bool isOldValue)
+    {
+        if (value == null) return isOldValue ? "" : "None";
+        
+        // Handle JsonElement with display_value
+        if (value is System.Text.Json.JsonElement element)
+        {
+            if (element.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                if (element.TryGetProperty("display_value", out var displayValue))
+                {
+                    var displayStr = displayValue.GetString();
+                    return !string.IsNullOrEmpty(displayStr) ? displayStr : "None";
+                }
+                if (element.TryGetProperty("value", out var valueElement))
+                {
+                    return MapFieldValue(fieldname, valueElement.GetString() ?? "");
+                }
+            }
+            else if (element.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                return MapFieldValue(fieldname, element.GetString() ?? "");
+            }
+        }
+        
+        // Handle string directly
+        if (value is string strValue)
+        {
+            return MapFieldValue(fieldname, strValue);
+        }
+        
+        return value?.ToString() ?? "None";
     }
     
     private string MapFieldValue(string fieldname, string value)
@@ -270,6 +307,19 @@ public class ServiceNowClient : IServiceNowClient
         {
             "state" => MapState(value),
             "priority" => MapPriority(value),
+            "impact" => MapImpactUrgency(value),
+            "urgency" => MapImpactUrgency(value),
+            _ => value
+        };
+    }
+    
+    private string MapImpactUrgency(string value)
+    {
+        return value switch
+        {
+            "1" => "1 - High",
+            "2" => "2 - Medium",
+            "3" => "3 - Low",
             _ => value
         };
     }
@@ -635,9 +685,10 @@ public class ServiceNowAuditResponse
 public class ServiceNowAuditRecord
 {
     public string sys_created_on { get; set; } = "";
+    public string sys_created_by { get; set; } = "";
     public string fieldname { get; set; } = "";
-    public string oldvalue { get; set; } = "";
-    public string newvalue { get; set; } = "";
+    public dynamic oldvalue { get; set; } = "";
+    public dynamic newvalue { get; set; } = "";
     public string user { get; set; } = "";
     public string documentkey { get; set; } = "";
     public string tablename { get; set; } = "";
