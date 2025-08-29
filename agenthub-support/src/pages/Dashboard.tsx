@@ -351,7 +351,7 @@ export function Dashboard() {
                   <div 
                     key={ticket.id} 
                     className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/tickets/${ticket.id}`)}>
+                    onClick={() => navigate('/tickets', { state: { openTicketId: ticket.id } })}>
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">

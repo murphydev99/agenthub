@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Filter, Search, ChevronDown, Loader2, RefreshCw, AlertCircle, Eye } from 'lucide-react';
 import { useAuthB2C } from '../contexts/AuthContextB2CSimple';
+import { useLocation } from 'react-router-dom';
 import { ticketService } from '../services/api';
 import type { Ticket } from '../services/api';
 import { CreateTicketModal } from '../components/CreateTicketModal';
 import { TicketDetailModal } from '../components/TicketDetailModal';
 
 export function Tickets() {
+  const location = useLocation();
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,16 @@ export function Tickets() {
     const statuses = [...new Set(tickets.map(t => t.status))].sort();
     setAvailableStatuses(statuses);
   }, [tickets]);
+
+  // Handle navigation from Dashboard
+  useEffect(() => {
+    if (location.state?.openTicketId && tickets.length > 0) {
+      setSelectedTicketId(location.state.openTicketId);
+      setShowDetailModal(true);
+      // Clear the state to prevent reopening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, tickets]);
 
   const loadTickets = async () => {
     setLoading(true);

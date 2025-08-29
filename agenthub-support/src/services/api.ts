@@ -29,11 +29,24 @@ api.interceptors.request.use(async (config) => {
           console.log('Token acquired:', tokenResponse.accessToken ? 'Yes' : 'No');
           console.log('ID Token:', tokenResponse.idToken ? 'Yes' : 'No');
           
-          // Try using ID token if access token is not available
-          const token = tokenResponse.accessToken || tokenResponse.idToken;
+          // Use ID token which contains user profile claims (name, email)
+          // Access tokens don't contain profile information in B2C
+          const token = tokenResponse.idToken || tokenResponse.accessToken;
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
-            console.log('Authorization header set with:', tokenResponse.accessToken ? 'access token' : 'ID token');
+            console.log('Authorization header set with:', tokenResponse.idToken ? 'ID token (contains profile)' : 'access token');
+            
+            // Log the decoded token to check claims (for debugging)
+            if (tokenResponse.idToken) {
+              try {
+                const payload = tokenResponse.idToken.split('.')[1];
+                const decoded = JSON.parse(atob(payload));
+                console.log('ID Token claims:', decoded);
+                console.log('User name from token:', decoded.name || decoded.given_name || 'Not found');
+              } catch (e) {
+                console.log('Could not decode token');
+              }
+            }
           }
         } catch (silentError: any) {
           console.log('Silent token acquisition failed:', silentError);
