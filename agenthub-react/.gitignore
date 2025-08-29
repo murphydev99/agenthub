@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Built files in public directory
+public/assets/
+public/index.html
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

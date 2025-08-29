@@ -1,0 +1,96 @@
+import { LogLevel } from '@azure/msal-browser';
+import type { Configuration } from '@azure/msal-browser';
+
+// Azure AD B2C Configuration
+export const b2cPolicies = {
+  names: {
+    signUpSignIn: 'B2C_1_SignUpSignIn',
+    forgotPassword: 'B2C_1_PasswordReset',
+    editProfile: 'B2C_1_ProfileEdit'
+  },
+  authorities: {
+    signUpSignIn: {
+      authority: `https://${import.meta.env.VITE_B2C_TENANT_NAME}.b2clogin.com/${import.meta.env.VITE_B2C_TENANT_NAME}.onmicrosoft.com/${import.meta.env.VITE_B2C_SIGNUP_SIGNIN_POLICY}`
+    },
+    forgotPassword: {
+      authority: `https://${import.meta.env.VITE_B2C_TENANT_NAME}.b2clogin.com/${import.meta.env.VITE_B2C_TENANT_NAME}.onmicrosoft.com/${import.meta.env.VITE_B2C_PASSWORD_RESET_POLICY}`
+    },
+    editProfile: {
+      authority: `https://${import.meta.env.VITE_B2C_TENANT_NAME}.b2clogin.com/${import.meta.env.VITE_B2C_TENANT_NAME}.onmicrosoft.com/${import.meta.env.VITE_B2C_PROFILE_EDIT_POLICY}`
+    }
+  },
+  authorityDomain: `${import.meta.env.VITE_B2C_TENANT_NAME}.b2clogin.com`
+};
+
+// MSAL configuration
+export const msalConfig: Configuration = {
+  auth: {
+    clientId: import.meta.env.VITE_B2C_CLIENT_ID || '',
+    authority: b2cPolicies.authorities.signUpSignIn.authority,
+    knownAuthorities: [b2cPolicies.authorityDomain],
+    redirectUri: window.location.origin,
+    postLogoutRedirectUri: window.location.origin,
+    navigateToLoginRequestUrl: true
+  },
+  cache: {
+    cacheLocation: 'sessionStorage', // Configures cache location
+    storeAuthStateInCookie: false // Set to true if you have issues with IE11
+  },
+  system: {
+    loggerOptions: {
+      loggerCallback: (level: LogLevel, message: string, containsPii: boolean) => {
+        if (containsPii) return;
+        switch (level) {
+          case LogLevel.Error:
+            console.error(message);
+            return;
+          case LogLevel.Info:
+            console.info(message);
+            return;
+          case LogLevel.Verbose:
+            console.debug(message);
+            return;
+          case LogLevel.Warning:
+            console.warn(message);
+            return;
+        }
+      },
+      logLevel: import.meta.env.DEV ? LogLevel.Verbose : LogLevel.Error
+    }
+  }
+};
+
+// API scope for accessing the backend
+export const apiConfig = {
+  scopes: [`https://${import.meta.env.VITE_B2C_TENANT_NAME}.onmicrosoft.com/${import.meta.env.VITE_B2C_CLIENT_ID}/access_as_user`],
+  uri: import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+};
+
+// Scopes for ID token
+export const loginRequest = {
+  scopes: ['openid', 'profile', 'offline_access', ...apiConfig.scopes]
+};
+
+// Custom claims that might be returned from B2C
+export interface B2CIdTokenClaims {
+  // Standard claims
+  aud: string;
+  iss: string;
+  iat: number;
+  exp: number;
+  sub: string;
+  
+  // B2C specific
+  name?: string;
+  given_name?: string;
+  family_name?: string;
+  email?: string;
+  emails?: string[];
+  
+  // Custom claims from user attributes
+  storeNumbers?: string[];
+  pcNumbers?: string[];
+  role?: string;
+  franchiseeName?: string;
+  phoneNumber?: string;
+}

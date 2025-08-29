@@ -1,0 +1,24 @@
+# Field Mapping Configuration
+# Use this as a template for your integration
+
+INCIDENT_FIELD_MAPPING:
+  # Your App Field -> ServiceNow Field
+  title: short_description
+  description: description
+  storeNumber: u_store_number
+  pcNumber: u_pc_number
+  franchiseeId: u_franchisee_id
+  franchiseeName: u_franchisee_name
+  brand: u_brand
+  clientCode: u_client_code
+  
+ASSIGNMENT_GROUP: 679434f053231300e321ddeeff7b12d8
+DEFAULT_COMPANY: 0e0d438b47e722103d75eee3716d431b
+
+INCIDENT_STATES:
+  new: 1
+  in_progress: 2
+  on_hold: 3
+  resolved: 6
+  closed: 7
+  cancelled: 8

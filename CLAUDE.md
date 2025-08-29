@@ -482,6 +482,38 @@ interface AuthState {
    - Rate limits
    - Error codes
 
+## Project Structure Notes
+
+### AgentHub Support Application
+- **Frontend**: `/agenthub-support` - React Vite application for support ticket management
+- **API**: `/agenthub-support/api-dotnet` - .NET 9 API for ServiceNow integration
+  - The API runs on port 5006
+  - Frontend runs on port 5174
+
+### AgentHub Support API (Separate Project)
+- **Location**: `/agenthub-support-api` - Separate .NET API project (different from the one in agenthub-support)
+
+## TODO: Fix B2C Authentication Scope Issue
+
+**Issue**: The B2C authentication with custom scopes is not working properly. Currently **ALL AUTHENTICATION IS DISABLED** in `TicketsController.cs` for testing.
+
+**Current Status**:
+- `[Authorize]` attribute is commented out - **API IS COMPLETELY UNPROTECTED**
+- B2C returns ID tokens but not access tokens for basic scopes
+- The API expects access tokens, not ID tokens
+
+**What needs to be fixed**:
+1. The API expects the scope `https://VistioSelfServiceDEV.onmicrosoft.com/9bac66e0-6d6c-494e-b5a1-15e04d343110/access_as_user`
+2. The frontend needs to properly acquire access tokens (not ID tokens) with this scope
+3. Currently using basic `openid` and `profile` scopes which only return ID tokens
+4. Both `[Authorize]` and `[RequiredScope]` attributes are commented out in `api-dotnet/Controllers/TicketsController.cs`
+
+**Files to update**:
+- `/api-dotnet/Controllers/TicketsController.cs` - Re-enable both `[Authorize]` and `[RequiredScope]` attributes
+- `/src/services/api.ts` - Fix token acquisition to use the proper scope and get access tokens
+- `/src/config/authConfig.ts` - Ensure login requests include the custom scope
+- May need to configure API to accept ID tokens or configure B2C to issue access tokens
+
 ## Conclusion
 
 This migration plan provides a comprehensive roadmap for modernizing the AgentHub application. By leveraging React, Vite, and modern tooling, we'll create a more maintainable, performant, and user-friendly system while preserving all critical functionality from the legacy application.

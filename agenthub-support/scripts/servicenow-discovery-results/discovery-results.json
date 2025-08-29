@@ -1,0 +1,671 @@
+{
+  "timestamp": "2025-08-28T19:09:08.642Z",
+  "instance": "https://dev305755.service-now.com",
+  "connection": {
+    "status": "SUCCESS",
+    "authenticatedAs": "survey.user",
+    "timestamp": "2025-08-28T19:09:08.952Z"
+  },
+  "incidentFields": {
+    "total": 32,
+    "fields": {
+      "hold_reason": {
+        "name": "hold_reason",
+        "label": "On hold reason",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=integer",
+          "value": "integer"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "u_franchisee_id": {
+        "name": "u_franchisee_id",
+        "label": "Franchisee ID",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "50",
+        "required": false,
+        "description": "Unique franchisee identifier"
+      },
+      "resolved_at": {
+        "name": "resolved_at",
+        "label": "Resolved",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=glide_date_time",
+          "value": "glide_date_time"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "u_store_number": {
+        "name": "u_store_number",
+        "label": "Store Number",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "20",
+        "required": false,
+        "description": "Franchisee store number identifier"
+      },
+      "incident_state": {
+        "name": "incident_state",
+        "label": "Incident state",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=integer",
+          "value": "integer"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "origin_table": {
+        "name": "origin_table",
+        "label": "Origin table",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=table_name",
+          "value": "table_name"
+        },
+        "maxLength": "80",
+        "required": false,
+        "description": ""
+      },
+      "reopen_count": {
+        "name": "reopen_count",
+        "label": "Reopen count",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=integer",
+          "value": "integer"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "caller_id": {
+        "name": "caller_id",
+        "label": "Caller",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=reference",
+          "value": "reference"
+        },
+        "maxLength": "32",
+        "required": false,
+        "description": ""
+      },
+      "reopened_time": {
+        "name": "reopened_time",
+        "label": "Last reopened at",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=glide_date_time",
+          "value": "glide_date_time"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "rfc": {
+        "name": "rfc",
+        "label": "Change Request",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=reference",
+          "value": "reference"
+        },
+        "maxLength": "32",
+        "required": false,
+        "description": ""
+      },
+      "calendar_stc": {
+        "name": "calendar_stc",
+        "label": "Resolve time",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=integer",
+          "value": "integer"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "parent_incident": {
+        "name": "parent_incident",
+        "label": "Parent Incident",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=reference",
+          "value": "reference"
+        },
+        "maxLength": "32",
+        "required": false,
+        "description": ""
+      },
+      "subcategory": {
+        "name": "subcategory",
+        "label": "Subcategory",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "u_pc_number": {
+        "name": "u_pc_number",
+        "label": "PC Number",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "20",
+        "required": false,
+        "description": "Profit center number"
+      },
+      "u_brand": {
+        "name": "u_brand",
+        "label": "Brand",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=choice",
+          "value": "choice"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": "Dunkin or Baskin Robbins brand"
+      },
+      "resolved_by": {
+        "name": "resolved_by",
+        "label": "Resolved by",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=reference",
+          "value": "reference"
+        },
+        "maxLength": "32",
+        "required": false,
+        "description": ""
+      },
+      "cause": {
+        "name": "cause",
+        "label": "Probable cause",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "4000",
+        "required": false,
+        "description": ""
+      },
+      "problem_id": {
+        "name": "problem_id",
+        "label": "Problem",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=reference",
+          "value": "reference"
+        },
+        "maxLength": "32",
+        "required": false,
+        "description": ""
+      },
+      "child_incidents": {
+        "name": "child_incidents",
+        "label": "Child Incidents",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=integer",
+          "value": "integer"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "u_franchisee_name": {
+        "name": "u_franchisee_name",
+        "label": "Franchisee Name",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "200",
+        "required": false,
+        "description": "Franchisee business name"
+      },
+      "notify": {
+        "name": "notify",
+        "label": "Notify",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=integer",
+          "value": "integer"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "reopened_by": {
+        "name": "reopened_by",
+        "label": "Last reopened by",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=reference",
+          "value": "reference"
+        },
+        "maxLength": "32",
+        "required": false,
+        "description": ""
+      },
+      "caused_by": {
+        "name": "caused_by",
+        "label": "Caused by Change",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=reference",
+          "value": "reference"
+        },
+        "maxLength": "32",
+        "required": false,
+        "description": ""
+      },
+      "business_stc": {
+        "name": "business_stc",
+        "label": "Business resolve time",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=integer",
+          "value": "integer"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "severity": {
+        "name": "severity",
+        "label": "Severity",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=integer",
+          "value": "integer"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "category": {
+        "name": "category",
+        "label": "Category",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "origin_id": {
+        "name": "origin_id",
+        "label": "Origin",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=document_id",
+          "value": "document_id"
+        },
+        "maxLength": "32",
+        "required": false,
+        "description": ""
+      },
+      "close_code": {
+        "name": "close_code",
+        "label": "Close code",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "business_impact": {
+        "name": "business_impact",
+        "label": "Business impact",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "4000",
+        "required": false,
+        "description": ""
+      },
+      "u_client_code": {
+        "name": "u_client_code",
+        "label": "Client Code",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "50",
+        "required": false,
+        "description": "Client identifier for multi-tenant support"
+      },
+      "": {
+        "name": "",
+        "label": "",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=collection",
+          "value": "collection"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": ""
+      },
+      "sys_id": {
+        "name": "sys_id",
+        "label": "Sys ID",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=GUID",
+          "value": "GUID"
+        },
+        "maxLength": "32",
+        "required": false,
+        "description": ""
+      }
+    },
+    "required": [],
+    "storeRelated": [
+      {
+        "name": "u_franchisee_id",
+        "label": "Franchisee ID",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "50",
+        "required": false,
+        "description": "Unique franchisee identifier"
+      },
+      {
+        "name": "u_store_number",
+        "label": "Store Number",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "20",
+        "required": false,
+        "description": "Franchisee store number identifier"
+      },
+      {
+        "name": "u_brand",
+        "label": "Brand",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=choice",
+          "value": "choice"
+        },
+        "maxLength": "40",
+        "required": false,
+        "description": "Dunkin or Baskin Robbins brand"
+      },
+      {
+        "name": "u_franchisee_name",
+        "label": "Franchisee Name",
+        "type": {
+          "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+          "value": "string"
+        },
+        "maxLength": "200",
+        "required": false,
+        "description": "Franchisee business name"
+      }
+    ],
+    "sampleData": {
+      "upon_reject": "cancel",
+      "sys_updated_on": "2016-12-14 02:46:44",
+      "number": "INC0000060",
+      "state": "7",
+      "sys_created_by": "employee",
+      "knowledge": "false",
+      "cmdb_ci": {
+        "link": "https://dev305755.service-now.com/api/now/table/cmdb_ci/109562a3c611227500a7b7ff98cc0dc7",
+        "value": "109562a3c611227500a7b7ff98cc0dc7"
+      },
+      "impact": "2",
+      "active": "false",
+      "priority": "3",
+      "sys_domain_path": "/",
+      "business_duration": "1970-01-01 08:00:00",
+      "short_description": "Unable to connect to email",
+      "notify": "1",
+      "sys_class_name": "incident",
+      "closed_by": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_user/681ccaf9c0a8016400b98a06818d57c7",
+        "value": "681ccaf9c0a8016400b98a06818d57c7"
+      },
+      "reassignment_count": "2",
+      "assigned_to": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_user/5137153cc611227c000bbd1bd8cd2007",
+        "value": "5137153cc611227c000bbd1bd8cd2007"
+      },
+      "escalation": "0",
+      "upon_approval": "proceed",
+      "made_sla": "true",
+      "child_incidents": "0",
+      "task_effective_number": "INC0000060",
+      "resolved_by": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_user/5137153cc611227c000bbd1bd8cd2007",
+        "value": "5137153cc611227c000bbd1bd8cd2007"
+      },
+      "sys_updated_by": "employee",
+      "opened_by": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_user/681ccaf9c0a8016400b98a06818d57c7",
+        "value": "681ccaf9c0a8016400b98a06818d57c7"
+      },
+      "sys_created_on": "2016-12-12 15:19:57",
+      "sys_domain": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_user_group/global",
+        "value": "global"
+      },
+      "calendar_stc": "102197",
+      "closed_at": "2016-12-14 02:46:44",
+      "business_service": {
+        "link": "https://dev305755.service-now.com/api/now/table/cmdb_ci_service/27d32778c0a8000b00db970eeaa60f16",
+        "value": "27d32778c0a8000b00db970eeaa60f16"
+      },
+      "opened_at": "2016-12-12 15:19:57",
+      "caller_id": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_user/681ccaf9c0a8016400b98a06818d57c7",
+        "value": "681ccaf9c0a8016400b98a06818d57c7"
+      },
+      "resolved_at": "2016-12-13 21:43:14",
+      "subcategory": "email",
+      "close_code": "Solved (Permanently)",
+      "assignment_group": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_user_group/287ebd7da9fe198100f92cc8d1d2154e",
+        "value": "287ebd7da9fe198100f92cc8d1d2154e"
+      },
+      "business_stc": "28800",
+      "description": "I am unable to connect to the email server. It appears to be down.",
+      "calendar_duration": "1970-01-02 04:23:17",
+      "close_notes": "This incident is resolved.",
+      "sys_id": "1c741bd70b2322007518478d83673af3",
+      "contact_type": "self-service",
+      "incident_state": "7",
+      "urgency": "2",
+      "company": {
+        "link": "https://dev305755.service-now.com/api/now/table/core_company/31bea3d53790200044e0bfc8bcbe5dec",
+        "value": "31bea3d53790200044e0bfc8bcbe5dec"
+      },
+      "activity_due": "2016-12-13 01:26:36",
+      "severity": "3",
+      "approval": "not requested",
+      "sys_mod_count": "15",
+      "reopen_count": "0",
+      "category": "inquiry"
+    }
+  },
+  "customFields": [
+    {
+      "name": "u_franchisee_id",
+      "label": "Franchisee ID",
+      "type": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+        "value": "string"
+      },
+      "maxLength": "50",
+      "required": false,
+      "description": "Unique franchisee identifier"
+    },
+    {
+      "name": "u_store_number",
+      "label": "Store Number",
+      "type": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+        "value": "string"
+      },
+      "maxLength": "20",
+      "required": false,
+      "description": "Franchisee store number identifier"
+    },
+    {
+      "name": "u_pc_number",
+      "label": "PC Number",
+      "type": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+        "value": "string"
+      },
+      "maxLength": "20",
+      "required": false,
+      "description": "Profit center number"
+    },
+    {
+      "name": "u_brand",
+      "label": "Brand",
+      "type": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=choice",
+        "value": "choice"
+      },
+      "maxLength": "40",
+      "required": false,
+      "description": "Dunkin or Baskin Robbins brand"
+    },
+    {
+      "name": "u_franchisee_name",
+      "label": "Franchisee Name",
+      "type": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+        "value": "string"
+      },
+      "maxLength": "200",
+      "required": false,
+      "description": "Franchisee business name"
+    },
+    {
+      "name": "u_client_code",
+      "label": "Client Code",
+      "type": {
+        "link": "https://dev305755.service-now.com/api/now/table/sys_glide_object?name=string",
+        "value": "string"
+      },
+      "maxLength": "50",
+      "required": false,
+      "description": "Client identifier for multi-tenant support"
+    }
+  ],
+  "companies": [
+    {
+      "name": "Dunkin Franchisees",
+      "sys_id": "0e0d438b47e722103d75eee3716d431b",
+      "searchTerm": "Dunkin"
+    },
+    {
+      "name": "Baskin Robbins Franchisees",
+      "sys_id": "4a0d438b47e722103d75eee3716d432c",
+      "searchTerm": "Baskin"
+    },
+    {
+      "name": "DBI Corporate",
+      "sys_id": "0a0d438b47e722103d75eee3716d432f",
+      "searchTerm": "DBI"
+    },
+    {
+      "name": "Dunkin Franchisees",
+      "sys_id": "0e0d438b47e722103d75eee3716d431b",
+      "searchTerm": "Franchise"
+    },
+    {
+      "name": "Baskin Robbins Franchisees",
+      "sys_id": "4a0d438b47e722103d75eee3716d432c",
+      "searchTerm": "Franchise"
+    }
+  ],
+  "assignmentGroups": [
+    {
+      "name": "Help Desk",
+      "description": "",
+      "sys_id": "679434f053231300e321ddeeff7b12d8",
+      "searchTerm": "Help"
+    },
+    {
+      "name": "Service Desk",
+      "description": "",
+      "sys_id": "d625dccec0a8016700a222a0f7900d06",
+      "searchTerm": "Service Desk"
+    }
+  ],
+  "categories": [
+    {
+      "category": "inquiry",
+      "subcategories": [
+        "email"
+      ]
+    },
+    {
+      "category": "Hardware",
+      "subcategories": []
+    },
+    {
+      "category": "database",
+      "subcategories": []
+    },
+    {
+      "category": "software",
+      "subcategories": [
+        "email"
+      ]
+    },
+    {
+      "category": "hardware",
+      "subcategories": []
+    },
+    {
+      "category": "network",
+      "subcategories": []
+    }
+  ],
+  "users": {},
+  "apiEndpoints": {
+    "Incidents": {
+      "path": "/table/incident",
+      "accessible": true
+    },
+    "Users": {
+      "path": "/table/sys_user",
+      "accessible": true
+    },
+    "Companies": {
+      "path": "/table/core_company",
+      "accessible": true
+    },
+    "Groups": {
+      "path": "/table/sys_user_group",
+      "accessible": true
+    },
+    "Knowledge": {
+      "path": "/table/kb_knowledge",
+      "accessible": true
+    },
+    "createIncident": true,
+    "deleteIncident": true
+  },
+  "recommendations": [
+    "Create field: company"
+  ],
+  "rateLimits": {
+    "testCount": 50,
+    "successful": 50,
+    "failed": 0,
+    "duration": 740,
+    "avgResponseTime": 15
+  }
+}

@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-navy: #0B2545;
+  --color-brand-red: #E94B4B;
+  --color-brand-red-light: rgba(233, 75, 75, 0.1);
+  --color-brand-red-hover: rgba(233, 75, 75, 0.2);
+}

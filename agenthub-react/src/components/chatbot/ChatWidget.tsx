@@ -64,7 +64,6 @@ export function ChatWidget({
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const processingStepRef = useRef<string | null>(null);
   
   const { 
     loadWorkflow, 
@@ -147,55 +146,57 @@ export function ChatWidget({
   useEffect(() => {
     console.log('Rows updated:', rows.length, 'rows');
     console.log('DisplayedStepIds:', Array.from(displayedStepIds));
-    console.log('Current processingStepRef:', processingStepRef.current);
     
     if (rows && rows.length > 0) {
-      // Find the last unanswered visible row that hasn't been displayed yet
-      const unansweredRows = rows.filter(row => {
-        // Double-check the row has a unique ID
+      // Find ALL unanswered visible rows that haven't been displayed yet
+      const pendingRows = rows.filter(row => {
         if (!row.id) {
           console.warn('Row missing ID:', row);
           return false;
         }
-        const isDisplayed = displayedStepIds.has(row.id);
-        const isProcessing = processingStepRef.current === row.id;
-        const isInMessages = messages.some(m => m.id === row.id);
+        const isDisplayed = displayedStepIds.has(row.id) || messages.some(m => m.id === row.id);
         
-        console.log(`Row ${row.id} - answered: ${row.answered}, visible: ${row.visible}, displayed: ${isDisplayed}, processing: ${isProcessing}, inMessages: ${isInMessages}`);
+        console.log(`Row ${row.id} - answered: ${row.answered}, visible: ${row.visible}, displayed: ${isDisplayed}`);
         
-        return !row.answered && 
-          row.visible && 
-          !isDisplayed &&
-          !isProcessing &&
-          !isInMessages;
+        return !row.answered && row.visible && !isDisplayed;
       });
-      console.log('Unanswered rows not yet displayed:', unansweredRows.length);
       
-      if (unansweredRows.length > 0) {
-        // Display the first unanswered row (in order)
-        const currentRow = unansweredRows[0];
-        console.log('Will display row:', currentRow.id, 'Type:', currentRow.step.StepType, 'Prompt:', currentRow.step.Prompt?.substring(0, 50));
-        processingStepRef.current = currentRow.id;
+      console.log('Pending rows to display:', pendingRows.length);
+      
+      // Process all pending rows sequentially with appropriate delays
+      let cumulativeDelay = 0;
+      pendingRows.forEach((row, index) => {
+        const stepType = row.step?.StepType?.toLowerCase();
+        const isFirstStep = displayedStepIds.size === 0 && index === 0;
         
-        // Add minimal delay for first step, longer for subsequent ones
-        const isFirstStep = displayedStepIds.size === 0;
-        const messageLength = currentRow.step.Prompt?.length || 0;
-        const delay = isFirstStep ? 100 : Math.min(800 + (messageLength * 5), 2000);
-        
-        // Show typing indicator during the delay
-        if (delay > 100) {
-          setIsTyping(true);
+        // Calculate delay based on step type
+        let delay = 0;
+        if (!isFirstStep) {
+          if (stepType === 'userinstruction' || stepType === 'notesblock') {
+            // Non-interactive steps get a shorter delay
+            delay = 800;
+          } else {
+            // Interactive steps (question, collect) get normal delay
+            const messageLength = row.step.Prompt?.length || 0;
+            delay = Math.min(800 + (messageLength * 5), 1500);
+          }
+        } else {
+          delay = 100; // First step shows quickly
         }
         
-        console.log(`Setting timeout for ${delay}ms to display step`);
+        const totalDelay = cumulativeDelay + delay;
+        
+        console.log(`Scheduling ${stepType} step ${row.id} with delay ${totalDelay}ms`);
+        
         setTimeout(() => {
-          console.log('Timeout fired, displaying step:', currentRow.id);
-          setIsTyping(false);
-          displayWorkflowStep(currentRow);
-        }, delay);
-      }
+          console.log('Displaying step:', row.id, 'Type:', stepType);
+          displayWorkflowStep(row);
+        }, totalDelay);
+        
+        cumulativeDelay = totalDelay;
+      });
     }
-  }, [rows, displayedStepIds, messages]);
+  }, [rows]); // Only depend on rows changing, not displayedStepIds or messages
 
   // Helper function to get API headers with domain token if provided
   const getApiHeaders = () => {
@@ -578,7 +579,6 @@ The numbers should be ordered by relevance with the best match first`;
       // Clear all state before starting new workflow
       setDisplayedStepIds(new Set());
       setCurrentStep(null);
-      processingStepRef.current = null;
       
       // Add workflow-specific welcome with unique ID BEFORE loading workflow
       const welcomeId = `welcome-${Date.now()}-${Math.random()}`;
@@ -736,7 +736,6 @@ The numbers should be ordered by relevance with the best match first`;
       // Clear all state before starting new workflow
       setDisplayedStepIds(new Set());
       setCurrentStep(null);
-      processingStepRef.current = null;
       
       // Load the workflow into the store
       loadWorkflow(workflow);
@@ -791,7 +790,6 @@ The numbers should be ordered by relevance with the best match first`;
       console.log('Updated displayedStepIds:', Array.from(newSet));
       return newSet;
     });
-    processingStepRef.current = null;
     
     setCurrentStep(row);
     const { step } = row;
@@ -988,7 +986,6 @@ The numbers should be ordered by relevance with the best match first`;
     // Clear the pending choices and reset state
     setPendingWorkflowChoices([]);
     setCurrentStep(null);
-    processingStepRef.current = null;
     setDisplayedStepIds(new Set()); // Clear displayed steps
     
     // Load the selected workflow
@@ -1214,7 +1211,6 @@ Return ONLY the extracted value or "INVALID_RESPONSE", nothing else.`;
               setCurrentStep(null);
               setWorkflowStarted(false);
               setDisplayedStepIds(new Set());
-              processingStepRef.current = null;
               setPendingWorkflowChoices([]);
               setIsTyping(false);
               setSelectedAnswerId(null);
@@ -1263,7 +1259,6 @@ Return ONLY the extracted value or "INVALID_RESPONSE", nothing else.`;
               setCurrentStep(null);
               setWorkflowStarted(false);
               setDisplayedStepIds(new Set());
-              processingStepRef.current = null;
               setPendingWorkflowChoices([]);
               setIsTyping(false);
               setSelectedAnswerId(null);

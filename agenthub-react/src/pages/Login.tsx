@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -10,13 +10,23 @@ export function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const { login, isLoading, error, clearError } = useAuthStore();
+  const location = useLocation();
+  const { login, isLoading, error, clearError, isAuthenticated } = useAuthStore();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = (location.state as any)?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await login(username, password);
-      navigate('/');
+      const from = (location.state as any)?.from?.pathname || '/';
+      navigate(from, { replace: true });
     } catch (error) {
       // Error is handled in the store
     }
@@ -74,6 +84,9 @@ export function Login() {
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
+            <div className="mt-4 text-xs text-gray-500 text-center">
+              Default credentials: admin / WorkflowCanvas2025
+            </div>
           </form>
         </CardContent>
       </Card>
