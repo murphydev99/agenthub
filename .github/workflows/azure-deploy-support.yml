@@ -35,7 +35,7 @@ jobs:
       working-directory: ${{ env.WORKING_DIRECTORY }}
 
     - name: Build for production
-      run: npm run build
+      run: npm run build:prod
       working-directory: ${{ env.WORKING_DIRECTORY }}
       env:
         # Azure AD B2C Configuration
