@@ -144,7 +144,6 @@ export function Dashboard() {
       priority: ticket.priority,
       store: ticket.storeNumber || 'N/A',
       time: getTimeAgo(ticket.createdAt),
-      assignee: ticket.assignedTo || 'Unassigned'
     }));
 
   const announcements = [
@@ -365,10 +364,6 @@ export function Dashboard() {
                           <span className="flex items-center gap-1">
                             <Building2 className="h-3 w-3" />
                             Store #{ticket.store}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {ticket.assignee}
                           </span>
                         </div>
                       </div>
