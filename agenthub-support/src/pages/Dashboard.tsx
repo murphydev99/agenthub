@@ -27,9 +27,11 @@ import {
 } from 'lucide-react';
 import { ticketService } from '../services/api';
 import type { Ticket as TicketType } from '../services/api';
+import { useAuthB2C } from '../contexts/AuthContextB2CSimple';
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuthB2C();
   const [tickets, setTickets] = useState<TicketType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -173,6 +175,27 @@ export function Dashboard() {
     { title: 'Opening & Closing Procedures', views: 87, helpful: 41 }
   ];
 
+  // Extract user info from B2C claims
+  const userName = user?.name || user?.username || 'User';
+  const userEmail = user?.username || '';
+  
+  // Get user initials from name
+  const getUserInitials = (name: string) => {
+    if (!name || name === 'User') return 'U';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return parts[0][0].toUpperCase() + parts[parts.length - 1][0].toUpperCase();
+    }
+    return name[0].toUpperCase();
+  };
+
+  // Get first name from full name
+  const getFirstName = (name: string) => {
+    if (!name || name === 'User') return 'User';
+    const parts = name.split(' ');
+    return parts[0];
+  };
+
   return (
     <div className="h-full max-w-7xl mx-auto p-4">
       <div className="h-full grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -182,10 +205,10 @@ export function Dashboard() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#E94B4B] to-red-600 flex items-center justify-center text-white font-bold text-lg">
-                JF
+                {getUserInitials(userName)}
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">Welcome back, John!</h2>
+                <h2 className="font-semibold text-gray-900">Welcome back, {getFirstName(userName)}!</h2>
                 <p className="text-xs text-gray-500">Franchise Owner</p>
               </div>
             </div>
@@ -193,12 +216,12 @@ export function Dashboard() {
             <div className="space-y-2 pt-3 border-t border-gray-100">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-600">Franchisee ID</span>
-                <span className="font-mono font-semibold text-gray-900">FR-12345</span>
+                <span className="font-mono font-semibold text-gray-900">{user?.franchiseeId || 'FR-12345'}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-600">Store Numbers</span>
                 <div className="flex gap-1">
-                  {['0234', '0567', '0891'].map(store => (
+                  {(user?.storeNumbers || ['0234', '0567', '0891']).map(store => (
                     <span key={store} className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">
                       {store}
                     </span>
@@ -325,7 +348,10 @@ export function Dashboard() {
               ) : (
                 <div className="divide-y divide-gray-100">
                   {recentTickets.map((ticket) => (
-                  <div key={ticket.id} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div 
+                    key={ticket.id} 
+                    className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/tickets/${ticket.id}`)}>
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">

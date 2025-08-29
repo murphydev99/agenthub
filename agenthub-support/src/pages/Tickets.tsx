@@ -259,7 +259,13 @@ export function Tickets() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredAndSortedTickets.map((ticket) => (
-                  <tr key={ticket.id} className="hover:bg-gray-50 transition-colors">
+                  <tr 
+                    key={ticket.id} 
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => {
+                      setSelectedTicketId(ticket.id);
+                      setShowDetailModal(true);
+                    }}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-mono text-gray-900">{ticket.number}</span>
                     </td>
@@ -294,7 +300,8 @@ export function Tickets() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button 
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedTicketId(ticket.id);
                           setShowDetailModal(true);
                         }}

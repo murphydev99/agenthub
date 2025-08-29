@@ -5,6 +5,8 @@
   color: #0066cc;
   text-decoration: underline;
   transition: color 0.2s ease;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .chat-message a:hover {
