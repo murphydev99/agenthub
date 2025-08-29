@@ -31,12 +31,14 @@ jobs:
         cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
 
     - name: Install dependencies
-      run: npm ci
-      working-directory: ${{ env.WORKING_DIRECTORY }}
+      run: |
+        cd agenthub-support
+        npm ci
 
     - name: Build for production
-      run: npm run build:prod
-      working-directory: ${{ env.WORKING_DIRECTORY }}
+      run: |
+        cd agenthub-support
+        npm run build:prod
       env:
         # Azure AD B2C Configuration
         VITE_B2C_TENANT_NAME: VistioSelfServiceDEV
@@ -60,12 +62,12 @@ jobs:
 
     - name: Create deployment package
       run: |
-        cd ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+        cd agenthub-support/dist
         zip -r ../../deploy.zip .
         cd ../..
 
     - name: Login to Azure
-      uses: azure/login@v1
+      uses: azure/login@v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS_SUPPORT }}
 
@@ -76,7 +78,7 @@ jobs:
         package: deploy.zip
 
     - name: Configure startup command
-      uses: azure/CLI@v1
+      uses: azure/CLI@v2
       with:
         inlineScript: |
           az webapp config set \
