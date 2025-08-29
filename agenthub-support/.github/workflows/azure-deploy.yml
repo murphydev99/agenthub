@@ -1,0 +1,88 @@
+name: Deploy to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'agenthub-support/**'
+      - '.github/workflows/azure-deploy.yml'
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: agenthub-support
+  AZURE_WEBAPP_PACKAGE_PATH: './agenthub-support/dist'
+  NODE_VERSION: '18.x'
+  WORKING_DIRECTORY: './agenthub-support'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+      working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    - name: Build for production
+      run: npm run build
+      working-directory: ${{ env.WORKING_DIRECTORY }}
+      env:
+        # Azure AD B2C Configuration
+        VITE_B2C_TENANT_NAME: VistioSelfServiceDEV
+        VITE_B2C_CLIENT_ID: 37baf699-fe0e-4789-a162-0c3626aa994a
+        VITE_B2C_SIGNUP_SIGNIN_POLICY: B2C_1_signin
+        VITE_B2C_PASSWORD_RESET_POLICY: B2C_1_passwordreset
+        VITE_B2C_PROFILE_EDIT_POLICY: B2C_1_profileedit
+        
+        # API Configuration
+        VITE_API_URL: https://agenthub-support-api.azurewebsites.net/api
+        
+        # Workflow API Configuration
+        VITE_WORKFLOW_API_URL: https://workflowcanvasapi.azurewebsites.net/api
+        VITE_WORKFLOW_API_KEY: e1ac5aea76405ab02e6220a5308d5ddc9cc6561853e0fb3c6a861c2c6414b8fa
+        
+        # OpenAI Configuration
+        VITE_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        
+        # Environment
+        VITE_APP_ENV: production
+
+    - name: Create deployment package
+      run: |
+        cd ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+        zip -r ../../deploy.zip .
+        cd ../..
+      
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS_SUPPORT }}
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: deploy.zip
+
+    - name: Configure startup command
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          az webapp config set \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group DEV-InternalProject \
+            --startup-file "pm2 serve /home/site/wwwroot --no-daemon --spa"
+
+    - name: Logout from Azure
+      run: az logout
