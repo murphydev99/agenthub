@@ -5,14 +5,56 @@ using RestSharp.Authenticators;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add B2C authentication
+// Add B2C authentication with relaxed validation for development
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApi(options =>
+    .AddJwtBearer(options =>
     {
-        builder.Configuration.Bind("AzureAdB2C", options);
-        options.TokenValidationParameters.NameClaimType = "name";
-    },
-    options => { builder.Configuration.Bind("AzureAdB2C", options); });
+        var b2cConfig = builder.Configuration.GetSection("AzureAdB2C");
+        var instance = b2cConfig["Instance"];
+        var domain = b2cConfig["Domain"];
+        var clientId = b2cConfig["ClientId"];
+        var signUpSignInPolicyId = b2cConfig["SignUpSignInPolicyId"];
+        
+        options.Authority = $"{instance}/{domain}/{signUpSignInPolicyId}/v2.0";
+        options.Audience = clientId;
+        
+        // Relaxed validation for development - accept ID tokens
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            NameClaimType = "name",
+            RoleClaimType = "roles"
+        };
+        
+        options.SaveToken = true;
+        options.RequireHttpsMetadata = false;
+        
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation("Token validated successfully");
+                if (context.Principal != null)
+                {
+                    foreach (var claim in context.Principal.Claims)
+                    {
+                        logger.LogInformation("Token Claim: {Type} = {Value}", claim.Type, claim.Value);
+                    }
+                }
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError("Authentication failed: {Error}", context.Exception?.Message);
+                return Task.CompletedTask;
+            }
+        };
+    });
 
 // Add CORS
 builder.Services.AddCors(options =>

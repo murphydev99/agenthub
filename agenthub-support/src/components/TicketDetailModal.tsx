@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Clock, AlertCircle, CheckCircle, XCircle, MessageSquare, History, User, Edit3, Send } from 'lucide-react';
 import { ticketService, type Ticket, type AuditEntry, type UpdateTicketDto } from '../services/api';
 
@@ -20,6 +20,7 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
   const [showCustomerUpdate, setShowCustomerUpdate] = useState(false);
   const [updatedImpact, setUpdatedImpact] = useState('');
   const [updatedUrgency, setUpdatedUrgency] = useState('');
+  const updateSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && ticketId) {
@@ -233,9 +234,83 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
                   Communication History
                 </h4>
                 
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <h5 className="text-xs font-medium text-blue-700 mb-2">Comments</h5>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{ticket.comments}</p>
+                <div className="space-y-3">
+                  <h5 className="text-xs font-medium text-gray-700">Communication History</h5>
+                  {/* Chat-like interface for comments */}
+                  <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                    <div className="space-y-3">
+                      {(() => {
+                        const comments = [];
+                        let currentComment = [];
+                        let currentTimestamp = null;
+                        let currentUser = null;
+                        let isAgentHub = false;
+                        
+                        ticket.comments.split('\n').forEach((line) => {
+                          // Check if this is a timestamp header
+                          const headerMatch = line.match(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (.+?) \(Additional comments\)$/);
+                          
+                          if (headerMatch) {
+                            // Save previous comment if exists
+                            if (currentComment.length > 0) {
+                              comments.push({
+                                timestamp: currentTimestamp,
+                                user: currentUser,
+                                text: currentComment.join('\n').trim(),
+                                isAgentHub: isAgentHub
+                              });
+                              currentComment = [];
+                            }
+                            
+                            // Start new comment
+                            currentTimestamp = headerMatch[1];
+                            currentUser = headerMatch[2];
+                            isAgentHub = currentUser === 'AgentHub Integration';
+                          } else if (line.trim()) {
+                            // Add line to current comment
+                            currentComment.push(line);
+                          }
+                        });
+                        
+                        // Add the last comment
+                        if (currentComment.length > 0) {
+                          comments.push({
+                            timestamp: currentTimestamp,
+                            user: currentUser,
+                            text: currentComment.join('\n').trim(),
+                            isAgentHub: isAgentHub
+                          });
+                        }
+                        
+                        // Render comments as chat messages
+                        return comments.map((comment, index) => (
+                          <div key={index} className={`flex ${comment.isAgentHub ? 'justify-end' : 'justify-start'} mb-3`}>
+                            <div className={`max-w-[75%] ${comment.isAgentHub ? 'order-2' : ''}`}>
+                              <div className={`rounded-lg p-3 ${
+                                comment.isAgentHub 
+                                  ? 'border-2 border-[#E94B4B] bg-red-50' 
+                                  : 'bg-white border border-gray-300'
+                              }`}>
+                                {comment.timestamp && (
+                                  <div className={`text-xs font-medium mb-2 ${
+                                    comment.isAgentHub ? 'text-[#E94B4B]' : 'text-gray-500'
+                                  }`}>
+                                    {comment.timestamp}
+                                    {!comment.isAgentHub && comment.user ? ` - ${comment.user}` : ''}
+                                  </div>
+                                )}
+                                <div className={`text-sm whitespace-pre-wrap ${
+                                  comment.isAgentHub ? 'text-gray-700' : 'text-gray-700'
+                                }`}>
+                                  {comment.text}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -284,7 +359,15 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-medium text-gray-700">Add Update</h4>
                   <button
-                    onClick={() => setShowCustomerUpdate(!showCustomerUpdate)}
+                    onClick={() => {
+                      setShowCustomerUpdate(!showCustomerUpdate);
+                      // Scroll to the update section after a brief delay to allow it to render
+                      if (!showCustomerUpdate) {
+                        setTimeout(() => {
+                          updateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                        }, 100);
+                      }
+                    }}
                     className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                   >
                     <Edit3 className="h-3 w-3" />
@@ -293,7 +376,7 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
                 </div>
                 
                 {showCustomerUpdate && (
-                  <div className="space-y-4 bg-gray-50 rounded-lg p-4">
+                  <div ref={updateSectionRef} className="space-y-4 bg-gray-50 rounded-lg p-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
                         Add Comment (Optional)

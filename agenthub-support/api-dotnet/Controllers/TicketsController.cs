@@ -55,39 +55,51 @@ public class TicketsController : ControllerBase
         try
         {
             // Log all available claims for debugging
+            _logger.LogInformation("===== START CLAIMS DEBUG =====");
             _logger.LogInformation("Total claims count: {Count}", User.Claims.Count());
+            _logger.LogInformation("User.Identity.Name: {Name}", User.Identity?.Name ?? "null");
+            _logger.LogInformation("User.Identity.IsAuthenticated: {Auth}", User.Identity?.IsAuthenticated ?? false);
+            
             foreach (var claim in User.Claims)
             {
-                _logger.LogInformation("Claim: {Type} = {Value}", claim.Type, claim.Value);
+                _logger.LogInformation("Claim Type: [{Type}] = Value: [{Value}]", claim.Type, claim.Value);
             }
             
-            // Get user information from B2C ID token claims
-            // Common B2C ID token claims:
-            // - name: Display name
-            // - given_name: First name  
-            // - family_name: Last name
-            // - emails: Email (may be JSON array)
-            // - email: Email
-            // - sub: Subject identifier
+            // Log specific claim lookups
+            _logger.LogInformation("Looking for 'name' claim: {Value}", User.FindFirst("name")?.Value ?? "NOT FOUND");
+            _logger.LogInformation("Looking for ClaimTypes.Name: {Value}", User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "NOT FOUND");
+            _logger.LogInformation("Looking for 'emails' claim: {Value}", User.FindFirst("emails")?.Value ?? "NOT FOUND");
+            _logger.LogInformation("===== END CLAIMS DEBUG =====");
+            
+            // Try multiple claim types for name
             var userName = User.FindFirst("name")?.Value ?? 
-                          User.FindFirst("given_name")?.Value ?? 
-                          User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ??
                           User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value ??
+                          User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ??
+                          User.FindFirst("given_name")?.Value ?? 
+                          User.Identity?.Name ??
                           "Customer";
             
+            // Try multiple claim types for email  
             var userEmail = User.FindFirst("emails")?.Value ?? 
                            User.FindFirst("email")?.Value ?? 
                            User.FindFirst("preferred_username")?.Value ??
                            User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value ??
-                           User.FindFirst("upn")?.Value;
+                           User.FindFirst("upn")?.Value ??
+                           "";
+                           
+            // Clean up emails claim if it's a JSON array
+            if (userEmail?.StartsWith("[") == true && userEmail?.EndsWith("]") == true)
+            {
+                userEmail = userEmail.Trim('[', ']', '"');
+            }
             
             // Set the caller email to the authenticated user's email
             dto.CallerEmail = userEmail;
             
-            // Add user identification to the description
+            // Add user identification at the end of the description (not at the beginning)
             if (!string.IsNullOrEmpty(dto.Description))
             {
-                dto.Description = $"[Submitted by {userName} ({userEmail})]\n\n{dto.Description}";
+                dto.Description = $"{dto.Description}\n\n[Submitted by {userName} ({userEmail})]";
             }
             
             _logger.LogInformation("Creating ticket for user: {Name} ({Email})", userName, userEmail);
@@ -109,28 +121,33 @@ public class TicketsController : ControllerBase
         {
             // Get user information from B2C ID token claims
             var userName = User.FindFirst("name")?.Value ?? 
-                          User.FindFirst("given_name")?.Value ?? 
-                          User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ??
                           User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value ??
+                          User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ??
+                          User.FindFirst("given_name")?.Value ?? 
+                          User.Identity?.Name ??
                           "Customer";
             
             var userEmail = User.FindFirst("emails")?.Value ?? 
                            User.FindFirst("email")?.Value ?? 
                            User.FindFirst("preferred_username")?.Value ??
                            User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value ??
-                           User.FindFirst("upn")?.Value;
+                           User.FindFirst("upn")?.Value ??
+                           "";
+                           
+            // Clean up emails claim if it's a JSON array
+            if (userEmail?.StartsWith("[") == true && userEmail?.EndsWith("]") == true)
+            {
+                userEmail = userEmail.Trim('[', ']', '"');
+            }
             
             _logger.LogInformation("Updating ticket {TicketId} for user: {Name} ({Email})", id, userName, userEmail);
             
-            // Prepend user identification to the comment
+            // Add user identification at the end of comments (same format as description)
             if (!string.IsNullOrEmpty(dto.CustomerComment))
             {
-                dto.CustomerComment = $"[Comment from {userName} ({userEmail})]\n{dto.CustomerComment}";
+                dto.CustomerComment = $"{dto.CustomerComment}\n\n[Comment from {userName} ({userEmail})]";
             }
-            if (!string.IsNullOrEmpty(dto.Description))
-            {
-                dto.Description = $"[Update from {userName} ({userEmail})]\n{dto.Description}";
-            }
+            // Keep description as-is without modification
             
             var response = await _serviceNowClient.UpdateTicketAsync(id, dto);
             return Ok(response);

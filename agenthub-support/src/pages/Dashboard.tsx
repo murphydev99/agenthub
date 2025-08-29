@@ -137,7 +137,8 @@ export function Dashboard() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 6)
     .map(ticket => ({
-      id: ticket.number,
+      id: ticket.id,  // Use sys_id instead of number for navigation
+      number: ticket.number,  // Keep number for display
       title: ticket.title,
       status: ticket.status,
       priority: ticket.priority,
@@ -355,7 +356,7 @@ export function Dashboard() {
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-mono text-xs text-gray-500">{ticket.id}</span>
+                          <span className="font-mono text-xs text-gray-500">{ticket.number}</span>
                           <span className="text-gray-400">•</span>
                           <span className="text-xs text-gray-500">{ticket.time}</span>
                         </div>
