@@ -625,9 +625,9 @@ The numbers should be ordered by relevance with the best match first`;
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden">
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-white min-w-0">
         {/* Header */}
         <div className="px-6 py-4 border-b flex justify-between items-center">
           <div>
@@ -755,8 +755,8 @@ The numbers should be ordered by relevance with the best match first`;
         </div>
 
         {/* Input */}
-        <div className="px-6 py-4 border-t">
-          <div className="flex gap-3 max-w-3xl mx-auto">
+        <div className="px-4 sm:px-6 py-4 border-t bg-white">
+          <div className="flex gap-2 sm:gap-3 max-w-3xl mx-auto w-full">
             <input
               ref={inputRef}
               type="text"
@@ -764,13 +764,15 @@ The numbers should be ordered by relevance with the best match first`;
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Type your message..."
-              className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 px-4 py-3 text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              style={{ fontSize: '16px' }}
               disabled={isLoading}
             />
             <button
               onClick={handleSend}
               disabled={isLoading || !inputValue.trim()}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-4 sm:px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[44px]"
+              style={{ fontSize: '16px' }}
             >
               <Send className="h-4 w-4" />
             </button>
