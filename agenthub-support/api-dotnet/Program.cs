@@ -276,8 +276,8 @@ public class ServiceNowClient : IServiceNowClient
         
         return new CreateTicketResponse
         {
-            Id = response?.Result?.sys_id ?? "",
-            Number = response?.Result?.number ?? "",
+            Id = response?.Result?.sys_id?.ToString() ?? "",
+            Number = response?.Result?.number?.ToString() ?? "",
             Status = "created",
             Message = "Ticket created successfully"
         };
@@ -319,7 +319,7 @@ public class ServiceNowClient : IServiceNowClient
         
         return new UpdateTicketResponse
         {
-            Id = response?.Result?.sys_id ?? id,
+            Id = response?.Result?.sys_id?.ToString() ?? id,
             Status = "updated",
             Message = "Ticket updated successfully"
         };
