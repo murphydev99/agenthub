@@ -67,7 +67,8 @@ export function MobileWorkflowMenu({
             
             {/* Navigation */}
             <div className="p-4 space-y-2 border-b">
-              <Button
+              {/* Go to Dashboard button hidden as requested */}
+              {/* <Button
                 variant="outline"
                 size="sm"
                 onClick={async () => {
@@ -81,7 +82,7 @@ export function MobileWorkflowMenu({
               >
                 <Home className="h-4 w-4 mr-2" />
                 Go to Dashboard
-              </Button>
+              </Button> */}
               
               {isInteractionMode && currentInteractionGUID && onEndInteraction && (
                 <Button
@@ -137,7 +138,8 @@ export function MobileWorkflowMenu({
                     </div>
                   </div>
                   
-                  {interactionWorkflows.length > 0 && (
+                  {/* Workflows list hidden as requested */}
+                  {/* {interactionWorkflows.length > 0 && (
                     <div>
                       <p className="text-xs font-medium mb-1">Workflows:</p>
                       <div className="space-y-1 max-h-32 overflow-y-auto">
@@ -154,7 +156,7 @@ export function MobileWorkflowMenu({
                         ))}
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
             )}
