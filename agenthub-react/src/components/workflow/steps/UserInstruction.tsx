@@ -34,10 +34,10 @@ export function UserInstruction({ row, light = false }: UserInstructionProps) {
   };
 
   const baseClasses = isAlert
-    ? "bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-400 text-gray-800 shadow-lg"
+    ? "bg-gradient-to-r from-red-50 to-rose-50 border-2 border-[#E94B4B] text-gray-800 shadow-lg"
     : light
-    ? "bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-orange-200 text-gray-800"
-    : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg";
+    ? "bg-gradient-to-r from-gray-50 to-blue-50 border-2 border-gray-200 text-gray-800"
+    : "bg-[#0B2545] text-white shadow-lg border-2 border-[#0B2545]";
   
   if (!hasSecondaryText) {
     return (

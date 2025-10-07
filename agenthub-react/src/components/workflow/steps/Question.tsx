@@ -166,7 +166,9 @@ export function Question({ row }: QuestionProps) {
       
       <div className={cn(
         "gap-2",
-        buttonLayout === 'horizontal' ? 'flex flex-row flex-wrap' : 'flex flex-col w-full'
+        buttonLayout === 'horizontal'
+          ? 'flex flex-row flex-wrap justify-end'
+          : 'flex flex-col items-end'
       )}>
         {visibleAnswers.map((answer: any, index: number) => {
           const isSelected = selectedAnswerGUID === answer.GUID;
@@ -188,7 +190,7 @@ export function Question({ row }: QuestionProps) {
                 return 'bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white border-red-600';
               if (isNeutral) 
                 return 'bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 text-white border-gray-600';
-              return 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white border-blue-600';
+              return 'bg-[#0B2545] hover:bg-[#0B2545]/90 text-white border-[#0B2545]';
             }
             
             // Unselected state with hover effects
@@ -199,12 +201,12 @@ export function Question({ row }: QuestionProps) {
             if (isNeutral) 
               return 'border-2 border-gray-300 hover:border-gray-500 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 hover:shadow-md transition-all';
             
-            // Default colors for other buttons
+            // Default colors for other buttons using brand colors
             const colors = [
-              'border-2 border-purple-300 hover:border-purple-500 hover:bg-gradient-to-r hover:from-purple-50 hover:to-violet-50',
-              'border-2 border-blue-300 hover:border-blue-500 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50',
-              'border-2 border-amber-300 hover:border-amber-500 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50',
-              'border-2 border-teal-300 hover:border-teal-500 hover:bg-gradient-to-r hover:from-teal-50 hover:to-cyan-50',
+              'border-2 border-[#0B2545]/30 hover:border-[#0B2545] hover:bg-blue-50',
+              'border-2 border-[#E94B4B]/30 hover:border-[#E94B4B] hover:bg-red-50',
+              'border-2 border-gray-300 hover:border-gray-500 hover:bg-gray-50',
+              'border-2 border-blue-300 hover:border-blue-500 hover:bg-blue-50',
             ];
             return colors[index % colors.length] + ' hover:shadow-md transition-all';
           };
@@ -216,10 +218,10 @@ export function Question({ row }: QuestionProps) {
               disabled={false}
               variant="ghost"
               className={cn(
-                buttonLayout === 'horizontal' 
-                  ? 'flex-1 min-w-0 sm:min-w-[100px] max-w-full' 
-                  : 'w-full',
-                'font-medium py-2 px-3 sm:px-4 text-sm sm:text-base break-words',
+                buttonLayout === 'horizontal'
+                  ? 'w-[150px]'
+                  : 'w-[200px]',
+                'font-medium py-1.5 px-3 text-sm truncate',
                 getButtonStyle(),
                 answered && !isSelected && 'opacity-70'
               )}

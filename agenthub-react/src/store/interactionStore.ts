@@ -34,8 +34,8 @@ interface InteractionState {
 }
 
 export const useInteractionStore = create<InteractionState>()((set, get) => ({
-      // Initial state - load interactionMode from localStorage
-      interactionMode: localStorage.getItem('interactionMode') === 'true',
+      // Initial state - always start with interaction mode enabled
+      interactionMode: true,
       currentInteractionGUID: null,
       interactionStartTime: null,
       interactionWorkflows: [],
@@ -61,10 +61,16 @@ export const useInteractionStore = create<InteractionState>()((set, get) => ({
       
       // Set interaction mode to specific value
       setInteractionMode: (enabled: boolean) => {
-        // Persist to localStorage
-        localStorage.setItem('interactionMode', enabled.toString());
-        
-        set((state) => {
+        const state = get();
+
+        // Only update if the value is actually changing
+        if (state.interactionMode === enabled) {
+          return;
+        }
+
+        // No longer persisting to localStorage - always true
+
+        set(() => {
           // If turning off interaction mode, end any active interaction
           if (!enabled && state.currentInteractionGUID) {
             return {

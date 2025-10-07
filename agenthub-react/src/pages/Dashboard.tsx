@@ -24,15 +24,15 @@ export function Dashboard() {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const { clearAllVariables } = useVariableStore();
   const { endSession } = useWorkflowStore();
-  const { 
-    interactionMode, 
-    setInteractionMode, 
+  const {
+    interactionMode,
+    setInteractionMode,
     currentInteractionGUID,
     interactionWorkflows,
     startInteraction,
     endInteraction,
     isInInteraction,
-    addWorkflowToInteraction 
+    addWorkflowToInteraction
   } = useInteractionStore();
 
   // Fetch workflows list
@@ -42,17 +42,10 @@ export function Dashboard() {
   });
 
   // Fetch aliases from the database
-  const { data: aliases = [] } = useQuery({
+  const { data: aliases } = useQuery({
     queryKey: ['aliases'],
     queryFn: () => workflowService.getAliases(),
   });
-
-  // Always enable interaction mode
-  useEffect(() => {
-    if (!interactionMode) {
-      setInteractionMode(true);
-    }
-  }, [interactionMode, setInteractionMode]);
 
   // Search for aliases
   useEffect(() => {
@@ -108,7 +101,7 @@ export function Dashboard() {
 
   const handleStartByAlias = async (aliasItem?: WorkflowAlias) => {
     const selected = aliasItem || filteredAliases[selectedIndex];
-    
+
     if (selected) {
       // Use the alias to navigate (the WorkflowExecution will resolve it)
       if (interactionMode) {
@@ -155,11 +148,11 @@ export function Dashboard() {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!showSuggestions) return;
-    
+
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev < filteredAliases.length - 1 ? prev + 1 : prev
         );
         break;
@@ -189,7 +182,7 @@ export function Dashboard() {
         type: 'warning'
       }
     );
-    
+
     if (confirmed) {
       endInteraction();
       endSession();
@@ -204,11 +197,11 @@ export function Dashboard() {
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
             <div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-navy">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#0B2545]">
                 AgentHub Dashboard
               </h2>
               <p className="text-gray-600 mt-2 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-brand-red" />
+                <Sparkles className="h-4 w-4 text-[#E94B4B]" />
                 Welcome to the next-generation workflow system
               </p>
             </div>
@@ -223,15 +216,15 @@ export function Dashboard() {
             <>
               {/* Start Interaction Card - Only show if no interaction is active */}
               {!currentInteractionGUID ? (
-                <Card className="relative overflow-hidden border-0 shadow-xl bg-brand-navy">
+                <Card className="relative overflow-hidden border-2 border-[#0B2545] shadow-xl bg-white">
                   <div className="relative">
-                    <CardHeader className="text-white">
-                      <CardTitle className="text-2xl flex items-center gap-2">
+                    <CardHeader>
+                      <CardTitle className="text-2xl flex items-center gap-2 text-[#0B2545]">
                         <Shield className="h-7 w-7" />
                         Start New Interaction
                       </CardTitle>
-                      <CardDescription className="text-white/80">
-                        Begin a secure customer interaction with authentication
+                      <CardDescription className="text-gray-600">
+                        Begin a secure customer interaction
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -239,7 +232,7 @@ export function Dashboard() {
                         onClick={async () => {
                           // Start a new interaction
                           startInteraction();
-                          
+
                           // Load the default workflow (configurable via environment variable)
                           try {
                             const defaultWorkflow = import.meta.env.VITE_DEFAULT_WORKFLOW || 'Premera Start';
@@ -249,7 +242,7 @@ export function Dashboard() {
                             console.error('Error starting interaction:', error);
                           }
                         }}
-                        className="w-full bg-brand-red text-white hover:bg-brand-red/90 font-bold shadow-lg"
+                        className="w-full bg-[#E94B4B] text-white hover:bg-[#E94B4B]/90 font-bold shadow-lg"
                         size="lg"
                       >
                         <Zap className="mr-2 h-5 w-5" />
@@ -285,7 +278,7 @@ export function Dashboard() {
                         {interactionWorkflows.length} workflow{interactionWorkflows.length !== 1 ? 's' : ''} executed
                       </p>
                     </div>
-                    
+
                     <div className="relative">
                       <div className="flex space-x-2">
                         <div className="flex-1 relative">
@@ -304,8 +297,8 @@ export function Dashboard() {
                           />
                           <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                         </div>
-                        <Button 
-                          onClick={() => handleStartByAlias()} 
+                        <Button
+                          onClick={() => handleStartByAlias()}
                           disabled={!workflowAlias && filteredAliases.length === 0}
                           className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-md"
                         >
@@ -313,10 +306,10 @@ export function Dashboard() {
                           Launch
                         </Button>
                       </div>
-                      
+
                       {/* Search Suggestions Dropdown */}
                       {showSuggestions && filteredAliases.length > 0 && (
-                        <div 
+                        <div
                           ref={suggestionsRef}
                           className="absolute z-10 w-full mt-2 bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto"
                         >
@@ -324,8 +317,8 @@ export function Dashboard() {
                             <div
                               key={item.AliasText}
                               className={`px-4 py-3 cursor-pointer transition-colors ${
-                                index === selectedIndex 
-                                  ? 'bg-purple-50 border-l-2 border-purple-500' 
+                                index === selectedIndex
+                                  ? 'bg-purple-50 border-l-2 border-purple-500'
                                   : 'hover:bg-gray-50'
                               }`}
                               onClick={() => handleStartByAlias(item)}
@@ -348,7 +341,7 @@ export function Dashboard() {
                           )}
                         </div>
                       )}
-                      
+
                       {/* No results message */}
                       {showSuggestions && workflowAlias && filteredAliases.length === 0 && (
                         <div className="absolute z-10 w-full mt-2 bg-white border rounded-lg shadow-lg p-4">
@@ -390,8 +383,8 @@ export function Dashboard() {
                   />
                   <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 </div>
-                <Button 
-                  onClick={() => handleStartByAlias()} 
+                <Button
+                  onClick={() => handleStartByAlias()}
                   disabled={!workflowAlias && filteredAliases.length === 0}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md"
                 >
@@ -399,10 +392,10 @@ export function Dashboard() {
                   Launch
                 </Button>
               </div>
-              
+
               {/* Search Suggestions Dropdown */}
               {showSuggestions && filteredAliases.length > 0 && (
-                <div 
+                <div
                   ref={suggestionsRef}
                   className="absolute z-10 w-full mt-2 bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto"
                 >
@@ -410,8 +403,8 @@ export function Dashboard() {
                     <div
                       key={item.AliasText}
                       className={`px-4 py-3 cursor-pointer transition-colors ${
-                        index === selectedIndex 
-                          ? 'bg-blue-50 border-l-2 border-blue-500' 
+                        index === selectedIndex
+                          ? 'bg-blue-50 border-l-2 border-blue-500'
                           : 'hover:bg-gray-50'
                       }`}
                       onClick={() => handleStartByAlias(item)}
@@ -434,7 +427,7 @@ export function Dashboard() {
                   )}
                 </div>
               )}
-              
+
               {/* No results message */}
               {showSuggestions && workflowAlias && filteredAliases.length === 0 && (
                 <div className="absolute z-10 w-full mt-2 bg-white border rounded-lg shadow-lg p-4">
@@ -477,7 +470,7 @@ export function Dashboard() {
                     'from-orange-500 to-red-500'
                   ];
                   const colorIndex = index % 4;
-                  
+
                   return (
                     <div
                       key={workflow.WorkflowUID}
@@ -500,9 +493,9 @@ export function Dashboard() {
                             </p>
                           </div>
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         >
                           <ArrowRight className="h-4 w-4" />

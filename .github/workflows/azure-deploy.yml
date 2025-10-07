@@ -39,10 +39,11 @@ jobs:
         cd agenthub-react
         npm run build
       env:
-        VITE_API_URL: https://workflowcanvasapi.azurewebsites.net/api
+        VITE_API_URL: https://agenthubdevapi-bfd9ehapancpa6be.eastus-01.azurewebsites.net/api
         VITE_APP_ENV: production
         VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
         VITE_OPENAI_MODEL: gpt-4o-mini
+        VITE_DEFAULT_WORKFLOW: ${{ secrets.VITE_DEFAULT_WORKFLOW }}
 
     - name: Create deployment package
       run: |

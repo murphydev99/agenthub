@@ -27,9 +27,9 @@ export function NotesBlock({ row }: NotesBlockProps) {
   };
   
   return (
-    <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-lg p-4 border-2 border-gray-600 shadow-xl">
+    <div className="bg-[#0B2545] text-white rounded-lg p-4 border-2 border-[#0B2545] shadow-xl">
       <div className="flex items-start justify-between">
-        <pre className="flex-1 text-sm whitespace-pre-wrap font-mono bg-black/30 p-3 rounded">
+        <pre className="flex-1 text-sm whitespace-pre-wrap font-mono bg-black/20 p-3 rounded">
           {notesText}
         </pre>
         <Button

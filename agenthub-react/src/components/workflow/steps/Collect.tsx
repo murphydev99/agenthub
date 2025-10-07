@@ -230,9 +230,9 @@ export function Collect({ row }: CollectProps) {
   };
   
   return (
-    <div className="space-y-3 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border-2 border-emerald-200">
+    <div className="space-y-3 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border-2 border-gray-200">
       {prompt && (
-        <div className="text-sm font-medium text-emerald-800">
+        <div className="text-sm font-medium text-[#0B2545]">
           <div dangerouslySetInnerHTML={{ __html: prompt }} />
         </div>
       )}

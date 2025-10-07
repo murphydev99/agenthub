@@ -147,9 +147,9 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
       {/* Left Sidebar - Hidden on mobile */}
       <div className="hidden lg:flex w-64 bg-white/80 backdrop-blur-sm border-r border-gray-200/50 flex-col shadow-xl">
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-50 to-purple-50">
-          <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-purple-500" />
+        <div className="p-4 border-b border-gray-200/50 bg-gradient-to-r from-gray-50 to-blue-50">
+          <h3 className="font-semibold text-[#0B2545] flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[#E94B4B]" />
             Navigation
           </h3>
         </div>
@@ -163,7 +163,7 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
               variant="destructive"
               size="sm"
               onClick={handleEndInteraction}
-              className="w-full justify-start bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 border-0 text-white shadow-md"
+              className="w-full justify-start bg-[#E94B4B] hover:bg-[#E94B4B]/90 border-0 text-white shadow-md"
             >
               <X className="h-4 w-4 mr-2" />
               End Interaction
@@ -174,7 +174,7 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
             variant="outline"
             size="sm"
             onClick={handleRestart}
-            className="w-full justify-start hover:bg-purple-50 hover:border-purple-300 transition-colors"
+            className="w-full justify-start hover:bg-blue-50 hover:border-[#0B2545] transition-colors"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Restart Workflow
@@ -184,12 +184,12 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
         {/* Interaction Status in Sidebar */}
         {isInteractionMode && currentInteractionGUID && (
           <div className="flex-1 flex flex-col border-t border-gray-200/50">
-            <div className="p-4 bg-gradient-to-br from-blue-50/50 to-purple-50/50">
+            <div className="p-4 bg-gradient-to-br from-gray-50/50 to-blue-50/50">
               <div className="flex items-center space-x-2 mb-3">
-                <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md">
+                <div className="p-2 rounded-lg bg-[#0B2545] text-white shadow-md">
                   <Shield className="h-4 w-4" />
                 </div>
-                <h3 className="font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Active Interaction</h3>
+                <h3 className="font-semibold text-[#0B2545]">Active Interaction</h3>
               </div>
               
               <div className="space-y-3 text-sm">
@@ -227,13 +227,13 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
         
         {/* Notes Panel - Always visible in sidebar */}
         <div className="flex-1 flex flex-col border-t border-gray-200/50 overflow-hidden">
-          <div className="p-4 bg-gradient-to-br from-green-50/50 to-blue-50/50">
+          <div className="p-4 bg-gradient-to-br from-gray-50/50 to-blue-50/50">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
-                <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-md">
+                <div className="p-2 rounded-lg bg-[#0B2545] text-white shadow-md">
                   <FileText className="h-4 w-4" />
                 </div>
-                <h3 className="font-semibold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Notes</h3>
+                <h3 className="font-semibold text-[#0B2545]">Notes</h3>
               </div>
               <Button
                 variant="outline"
@@ -285,7 +285,7 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
               sharedNotes={sharedNotes}
             />
             
-            <div className="hidden sm:block p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md flex-shrink-0">
+            <div className="hidden sm:block p-2 rounded-lg bg-[#0B2545] text-white shadow-md flex-shrink-0">
               <Zap className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">

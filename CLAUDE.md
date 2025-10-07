@@ -652,31 +652,57 @@ jobs:
    - Proper handling of workflow SubSteps
    - Variable store integration
 
-### 🔧 In Progress: B2C User Identification
+### ✅ RESOLVED: B2C User Identification (Aug 29, 2025)
 
-**Current Issue**: User identification in ServiceNow showing as "Customer ()" with no name/email.
+**Solution**: Modified API to accept ID tokens and extract user claims properly.
+- User identification now working - shows "[Submitted by Sean Murphy (sean.murphy@vistio.io)]"
+- API updated to use relaxed JWT validation for ID tokens
+- Both CreateTicket and UpdateTicket methods successfully extract user info
 
-**Root Cause**: 
-- B2C sign-in flow not returning user profile claims (name, email)
-- ID token being used instead of access token
-- ID token only contains basic claims (sub, aud, iss) but no user profile data
-- Account object shows `username: ''` is empty
+### 🔧 Latest Updates (Aug 29, 2025)
 
-**What's Been Done**:
-- API updated to extract B2C claims properly (checking multiple claim types)
-- Added comprehensive claim logging
-- Prepared user identification format: "[Submitted by {name} ({email})]"
-- Both CreateTicket and UpdateTicket methods ready to use B2C claims
+**UI/UX Improvements Completed**:
+1. **Ticket Detail Modal**:
+   - Reduced modal height from 90vh to 70vh for better visibility
+   - Moved created/updated dates to top right corner in smaller font
+   - "Add Comment/Update Priority" button positioned next to Activity header
+   - Comment form appears BEFORE existing comments (no scrolling needed)
+   - Combined "Activity & Comments" feed ready for both types
+   - Chat-like interface: AgentHub comments on right (red border), others on left
 
-**Next Steps**:
-1. **B2C Configuration** - Update B2C sign-in flow to include user profile claims
-2. **Token Scopes** - May need to request additional scopes during login
-3. **User Attributes** - Ensure B2C user attributes include display name and email
+2. **Dashboard**:
+   - Removed "Unassigned" icon and label from recent tickets view
+   - Fixed navigation to use sys_id instead of ticket number
 
-**Files Ready for B2C Integration**:
-- `/api-dotnet/Controllers/TicketsController.cs` - Ready to extract claims once available
-- `/src/services/api.ts` - Sending ID token in Authorization header
-- User identification will show in ServiceNow as: "[Submitted by John Doe (john.doe@example.com)]"
+3. **Mobile Experience**:
+   - Fixed iOS zoom issue by setting input font-size to 16px
+   - Added viewport constraints (maximum-scale=1.0, user-scalable=no)
+   - Improved responsive padding and touch targets
+   - Fixed send button cutoff on iPhone
+
+### ⏳ Pending: sys_audit Table Access
+
+**Current Status**: 
+- API correctly configured with ServiceNow audit query
+- Using `fieldnameINimpact,urgency,state,priority,assigned_to` syntax
+- Service account `svc_agenthub_portal` lacks read permission for sys_audit table
+- Getting "User is unauthorized to access table: sys_audit" error
+
+**Once Resolved**:
+- Field changes will automatically display in Activity feed as blue boxes
+- Will show: Field name, Old value → New value, Timestamp, User who made change
+
+### 💡 Potential Next Features
+
+1. **ServiceNow User Sync**:
+   - Can create users via `POST /api/now/table/sys_user`
+   - Could auto-provision ServiceNow users from B2C authentication
+   - Would improve ticket attribution and tracking
+
+2. **Additional Improvements**:
+   - All requested UI polish completed
+   - API deployed to Azure successfully
+   - Frontend ready for GitHub Actions deployment
 
 ### 🚀 Quick Start
 
