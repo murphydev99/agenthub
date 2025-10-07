@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWorkflowStore } from '../../store/workflowStore';
 import { useVariableStore } from '../../store/variableStore';
@@ -156,15 +156,7 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
         
         {/* Navigation Buttons */}
         <div className="p-4 space-y-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBackToDashboard}
-            className="w-full justify-start hover:bg-blue-50 hover:border-blue-300 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
+          {/* Back to Dashboard button hidden as requested */}
           
           {isInteractionMode && currentInteractionGUID && (
             <Button
@@ -217,30 +209,7 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
                   </div>
                 </div>
                 
-                {/* Workflow List */}
-                {interactionWorkflows.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium mb-2 text-gray-600">Workflows:</p>
-                    <div className="space-y-1 max-h-48 overflow-y-auto">
-                      {interactionWorkflows.map((w, idx) => (
-                        <div key={idx} className="text-xs bg-white/70 backdrop-blur p-2 rounded-lg border border-gray-200/50 hover:shadow-md transition-shadow">
-                          <div className="font-medium flex items-center gap-1">
-                            <span className="text-purple-600">{idx + 1}.</span>
-                            {w.workflowName}
-                          </div>
-                          <div className={`text-xs mt-1 flex items-center gap-1 ${
-                            w.status === 'completed' ? 'text-green-600' : 
-                            w.status === 'running' ? 'text-blue-600' : 
-                            'text-gray-600'
-                          }`}>
-                            {w.status === 'running' && <Activity className="h-3 w-3 animate-pulse" />}
-                            Status: {w.status}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Workflow List - Hidden as requested */}
                 
                 {/* Shared Notes */}
                 {sharedNotes && (
@@ -284,11 +253,16 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
                 Copy
               </Button>
             </div>
-            <div className="bg-white/70 backdrop-blur border border-gray-200/50 rounded-lg p-3 h-64 overflow-y-auto shadow-inner">
-              <pre className="text-xs whitespace-pre-wrap font-mono text-gray-700">
-                {notes || <span className="text-gray-400 italic">No notes yet...</span>}
-              </pre>
-            </div>
+            <textarea
+              value={notes || ''}
+              onChange={(e) => {
+                // Update notes in the workflow store
+                const { updateNotes } = useWorkflowStore.getState();
+                updateNotes(e.target.value);
+              }}
+              placeholder="No notes yet..."
+              className="bg-white/70 backdrop-blur border border-gray-200/50 rounded-lg p-3 h-64 shadow-inner text-xs whitespace-pre-wrap font-mono text-gray-700 w-full resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
         </div>
       </div>
@@ -315,9 +289,7 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
               <Zap className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
-                {currentWorkflow.WorkflowName}
-              </h2>
+              {/* Workflow name hidden as requested */}
               <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-1">
                 {workflowStack && workflowStack.length > 0 ? (
                   <>

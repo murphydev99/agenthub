@@ -84,6 +84,7 @@ interface WorkflowState {
   
   // Notes management
   addToNotes: (text: string) => void;
+  updateNotes: (text: string) => void;
   clearNotes: () => void;
   
   // Session management
@@ -595,12 +596,16 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     set((state) => ({
       notes: state.notes + (state.notes ? '\n' : '') + text,
     }));
-    
+
     // Also add to shared notes if in interaction mode
     const interactionState = useInteractionStore.getState();
     if (interactionState.isInInteraction()) {
       interactionState.appendToSharedNotes(text);
     }
+  },
+
+  updateNotes: (text) => {
+    set({ notes: text });
   },
 
   clearNotes: () => {

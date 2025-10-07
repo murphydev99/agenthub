@@ -15,6 +15,12 @@ export default {
     },
     extend: {
       colors: {
+        brand: {
+          navy: '#0B2545',
+          red: '#E94B4B',
+          'red-light': 'rgba(233,75,75,0.1)',
+          'red-hover': 'rgba(233,75,75,0.2)',
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
