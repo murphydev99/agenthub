@@ -206,7 +206,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       // Only continue processing if the parent has more steps
       // This prevents cascading returns through all parent workflows
       if (parentState.currentStepIndex < parentState.pendingSteps.length) {
-        setTimeout(() => get().processNextStep(), 100);
+        setTimeout(() => get().processNextStep(), 10);
       } else {
         console.log('[returnFromSubWorkflow] Parent workflow is also complete - stopping');
       }
@@ -372,11 +372,12 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       ['question', 'collect'].includes(row.step.StepType.toLowerCase())
     );
     
-    // For non-blocking steps (userinstruction, notesblock), only process next if no blocking steps pending
-    if (['userinstruction', 'notesblock'].includes(step.StepType.toLowerCase())) {
+    // For non-blocking steps (userinstruction, userinstruction-light, notesblock), only process next if no blocking steps pending
+    const stepTypeLower = step.StepType.toLowerCase();
+    if (['userinstruction', 'userinstruction-light', 'notesblock'].includes(stepTypeLower)) {
       if (!hasUnansweredBlockingStep) {
         set((state) => ({ currentStepIndex: state.currentStepIndex + 1 }));
-        setTimeout(() => state.processNextStep(), 100);
+        setTimeout(() => state.processNextStep(), 10);
       }
       // Otherwise, stop processing until blocking step is answered
     }
@@ -551,13 +552,13 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
         currentStepIndex: 0,
         currentParentButtonGUID: answerId, // Track which answer button these substeps belong to
       });
-      
-      setTimeout(() => get().processNextStep(), 100);
+
+      setTimeout(() => get().processNextStep(), 10);
     } else if (!isChangingAnswer) {
       // No substeps - move to next step in queue
       console.log('[answerQuestion] No substeps, moving to next step');
       set((state) => ({ currentStepIndex: state.currentStepIndex + 1 }));
-      setTimeout(() => get().processNextStep(), 100);
+      setTimeout(() => get().processNextStep(), 10);
     } else {
       console.log('[answerQuestion] Answer changed but no substeps to process');
     }
@@ -579,9 +580,9 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
           rows,
           currentStepIndex: state.currentStepIndex + 1,
         };
-        
+
         // Process next step after a brief delay
-        setTimeout(() => get().processNextStep(), 100);
+        setTimeout(() => get().processNextStep(), 10);
         
         return newState;
       }

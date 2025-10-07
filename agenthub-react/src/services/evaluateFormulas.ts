@@ -52,8 +52,8 @@ export class EvaluateFormulaProcessor {
   private static evaluateCondition(condition: string): string {
     const variableStore = useVariableStore.getState();
     
-    // Find operation patterns (Empty, NotEmpty, Equals(), Contains(), etc.) - case insensitive
-    const operationMatch = condition.match(/\.(empty|notempty|equals|contains|greaterthan|lessthan|startswith|endswith)(\([^)]*\))?$/i);
+    // Find operation patterns (Empty, NotEmpty, Equals(), NotEquals(), Contains(), etc.) - case insensitive
+    const operationMatch = condition.match(/\.(empty|notempty|equals|notequals|contains|notcontains|greaterthan|greaterthanequalto|lessthan|lessthanequalto|startswith|endswith)(\([^)]*\))?$/i);
     
     if (!operationMatch) {
       // No operation, just evaluate the variable itself

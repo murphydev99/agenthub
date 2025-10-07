@@ -66,7 +66,7 @@ export function Question({ row }: QuestionProps) {
   
   // Check if this question should be hidden because it will auto-answer
   const willAutoAnswer = processedAnswers.some((a: any) => a.shouldAutoAnswer);
-  
+
   // Auto-answer if conditions are met
   useEffect(() => {
     if (!answered && !autoAnswered) {

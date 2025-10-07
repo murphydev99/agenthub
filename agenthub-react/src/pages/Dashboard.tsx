@@ -319,10 +319,10 @@ export function Dashboard() {
                           // Start a new interaction
                           startInteraction();
                           
-                          // Load the authenticate workflow
+                          // Load the Premera Start workflow
                           try {
                             // TODO: Make this configurable
-                            const authenticateAlias = 'authenticate';
+                            const authenticateAlias = 'Premera Start';
                             const encoded = btoa(authenticateAlias);
                             navigate(`/w/${encoded}?interaction=true`);
                           } catch (error) {

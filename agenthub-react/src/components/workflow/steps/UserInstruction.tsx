@@ -11,22 +11,31 @@ interface UserInstructionProps {
 export function UserInstruction({ row, light = false }: UserInstructionProps) {
   const { interpolateText } = useVariableStore();
   const [isExpanded, setIsExpanded] = useState(true);
-  
+
   const { step } = row;
   const hasSecondaryText = step.SecondaryText && step.SecondaryText.trim() !== '';
-  
+
   // Interpolate variables in the text
   const primaryText = interpolateText(step.Prompt || '');
   const secondaryText = hasSecondaryText ? interpolateText(step.SecondaryText) : '';
-  
+
+  // Check if this is an error/alert message (contains red color or warning symbols)
+  const isAlert = primaryText.toLowerCase().includes('color=\'red\'') ||
+                  primaryText.toLowerCase().includes('color="red"') ||
+                  primaryText.includes('&#10071;') ||
+                  primaryText.toLowerCase().includes('not found') ||
+                  primaryText.toLowerCase().includes('error');
+
   // Parse HTML content (React will escape by default, so we need to be careful)
   // For now, we'll use dangerouslySetInnerHTML with sanitization in production
   const renderHtml = (html: string) => {
     // In production, use a library like DOMPurify to sanitize HTML
     return <div dangerouslySetInnerHTML={{ __html: html }} />;
   };
-  
-  const baseClasses = light
+
+  const baseClasses = isAlert
+    ? "bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-400 text-gray-800 shadow-lg"
+    : light
     ? "bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-orange-200 text-gray-800"
     : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg";
   

@@ -97,6 +97,7 @@ export function WorkflowRenderer({ onBack, isInteractionMode }: WorkflowRenderer
 
   const handleRestart = () => {
     endSession();
+    clearAllVariables();
     window.location.reload(); // Simple restart for now
   };
 
